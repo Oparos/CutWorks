@@ -1,0 +1,19 @@
+<RCC>
+    <qresource prefix="/theme">
+        <file alias="theme.qss">theme.qss</file>
+    </qresource>
+    <qresource prefix="/icons">
+        <file alias="refresh.svg">icons/refresh.svg</file>
+        <file alias="play.svg">icons/play.svg</file>
+        <file alias="pause.svg">icons/pause.svg</file>
+        <file alias="stop.svg">icons/stop.svg</file>
+        <file alias="arrow-up.svg">icons/arrow-up.svg</file>
+        <file alias="arrow-down.svg">icons/arrow-down.svg</file>
+        <file alias="arrow-left.svg">icons/arrow-left.svg</file>
+        <file alias="arrow-right.svg">icons/arrow-right.svg</file>
+        <file alias="arrow-up-left.svg">icons/arrow-up-left.svg</file>
+        <file alias="arrow-up-right.svg">icons/arrow-up-right.svg</file>
+        <file alias="arrow-down-left.svg">icons/arrow-down-left.svg</file>
+        <file alias="arrow-down-right.svg">icons/arrow-down-right.svg</file>
+    </qresource>
+</RCC>

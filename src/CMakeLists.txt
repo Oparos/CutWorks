@@ -6,10 +6,12 @@ add_subdirectory(cam)
 add_subdirectory(cnc)
 
 # --- Application shell (executable) ---
+# The .qrc is compiled by AUTORCC and embeds the theme into the binary.
 add_executable(CutWorks
     main.cpp
     app/MainWindow.h
     app/MainWindow.cpp
+    ${CMAKE_SOURCE_DIR}/resources/app.qrc
 )
 
 target_include_directories(CutWorks PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})

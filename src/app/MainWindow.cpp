@@ -2,7 +2,7 @@
 
 #include "cad/CadModule.h"
 #include "cam/CamModule.h"
-#include "cnc/CncModule.h"
+#include "cnc/ui/CncModule.h"
 
 #include <QAction>
 #include <QStackedWidget>

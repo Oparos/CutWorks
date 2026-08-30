@@ -1,0 +1,256 @@
+/*
+ * CutWorks default theme (dark).
+ *
+ * Portability / high-DPI notes:
+ *  - No hard-coded font-family or font size here: the application font comes
+ *    from the system (respects the user's DPI and accessibility settings) and
+ *    is set once in code. This keeps text crisp on every screen and OS.
+ *  - Only colors, borders, spacing and radii are styled. Qt scales the px
+ *    values by the display's device pixel ratio, so they stay proportional.
+ */
+
+/* === GLOBAL === */
+
+QToolTip {
+    color: #e0e0e0;
+    background-color: #3a3a3a;
+    border: 1px solid #555;
+}
+
+QWidget {
+    background-color: #2b2b2b;
+    color: #e0e0e0;
+}
+
+/* === LABEL === */
+
+QLabel {
+    color: #e0e0e0;
+}
+
+QLabel#title {
+    font-weight: bold;
+}
+
+/* === BUTTON === */
+
+QPushButton {
+    background-color: #3c3c3c;
+    border: 1px solid #4a4a4a;
+    padding: 5px 10px;
+    border-radius: 3px;
+}
+
+QPushButton:hover {
+    background-color: #4a4a4a;
+}
+
+QPushButton:pressed {
+    background-color: #2a2a2a;
+}
+
+QPushButton:disabled {
+    color: #7a7a7a;
+    background-color: #333333;
+    border-color: #3f3f3f;
+}
+
+/* === INPUT === */
+
+QLineEdit,
+QDoubleSpinBox,
+QSpinBox,
+QComboBox {
+    background-color: #3a3a3a;
+    border: 1px solid #555;
+    padding: 4px;
+    border-radius: 3px;
+}
+
+QLineEdit:focus,
+QDoubleSpinBox:focus,
+QSpinBox:focus,
+QComboBox:focus {
+    border: 1px solid #6c9bff;
+}
+
+/* === TREE === */
+
+QTreeWidget {
+    background-color: #252525;
+    border: 1px solid #3a3a3a;
+    alternate-background-color: #2d2d2d;
+    padding: 3px;
+}
+
+QTreeWidget::item {
+    padding: 4px;
+}
+
+QTreeWidget::item:selected {
+    background-color: #5c8aff;
+    color: white;
+}
+
+QTreeWidget::item:hover {
+    background-color: #3a3a3a;
+}
+
+/* === TOOLBAR === */
+
+QToolBar {
+    background: #2b2b2b;
+    border-bottom: 1px solid #444;
+    spacing: 4px;
+}
+
+/* === SCROLLBAR === */
+
+QScrollBar:vertical {
+    background: #2b2b2b;
+    width: 12px;
+}
+
+QScrollBar::handle:vertical {
+    background: #4a4a4a;
+    min-height: 20px;
+    border-radius: 4px;
+}
+
+QScrollBar::handle:vertical:hover {
+    background: #5a5a5a;
+}
+
+QScrollBar:horizontal {
+    background: #2b2b2b;
+    height: 12px;
+}
+
+QScrollBar::handle:horizontal {
+    background: #4a4a4a;
+    min-width: 20px;
+    border-radius: 4px;
+}
+
+QScrollBar::handle:horizontal:hover {
+    background: #5a5a5a;
+}
+
+/* === MENU === */
+
+QMenu {
+    background-color: #2f2f2f;
+    border: 1px solid #555;
+}
+
+QMenu::item:selected {
+    background-color: #5c8aff;
+}
+
+/* === TABLE === */
+
+QTableWidget {
+    gridline-color: #444;
+    background-color: #2f2f2f;
+}
+
+QHeaderView::section {
+    background-color: #3a3a3a;
+    padding: 4px;
+    border: 1px solid #444;
+}
+
+/* === GRAPHICS VIEW === */
+
+QGraphicsView {
+    border: 1px solid #444;
+}
+
+/* === DRO (digital read-out) === */
+
+QLabel#droValue {
+    font-size: 22px;
+    font-weight: bold;
+    color: #6c9bff;
+}
+
+QLabel#droFeed {
+    font-size: 16px;
+    font-weight: bold;
+    color: #ff9800;
+}
+
+QLabel#droState {
+    font-size: 15px;
+    font-weight: bold;
+}
+
+/* === CONSOLE === */
+
+QTextEdit#console {
+    background-color: #1e1e1e;
+    color: #d4d4d4;
+    font-family: "Consolas", "Menlo", "DejaVu Sans Mono", monospace;
+}
+
+QLineEdit#consoleInput {
+    font-family: "Consolas", "Menlo", "DejaVu Sans Mono", monospace;
+}
+
+/* === G-CODE LIST + JOB CONTROLS === */
+
+QListWidget#gcodeList {
+    background-color: #1e1e1e;
+    color: #d4d4d4;
+    font-family: "Consolas", "Menlo", "DejaVu Sans Mono", monospace;
+    border: 1px solid #3a3a3a;
+}
+
+QListWidget#gcodeList::item:selected {
+    background-color: #094771;
+    color: #ffffff;
+}
+
+QPushButton#jobPlay {
+    background-color: #2e7d32;
+    color: white;
+    font-weight: bold;
+}
+QPushButton#jobPlay:hover { background-color: #37933c; }
+
+QPushButton#jobPause {
+    background-color: #f9a825;
+    color: #1e1e1e;
+    font-weight: bold;
+}
+QPushButton#jobPause:hover { background-color: #ffb733; }
+
+QPushButton#jobStop {
+    background-color: #c62828;
+    color: white;
+    font-weight: bold;
+}
+QPushButton#jobStop:hover { background-color: #d63232; }
+
+QPushButton#jobDryRun:checked {
+    background-color: #ff9800;
+    color: white;
+    font-weight: bold;
+}
+
+/* === OVERRIDE / THC === */
+
+QPushButton#overrideReset {
+    font-weight: bold;
+    background-color: #555555;
+}
+
+QPushButton#thcToggle {
+    background-color: #388e3c;
+    color: white;
+    font-weight: bold;
+    padding: 5px;
+}
+QPushButton#thcToggle:checked {
+    background-color: #c62828;
+}

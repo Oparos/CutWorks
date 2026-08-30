@@ -25,7 +25,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 # --- Dependencies ---
 # Qt is provided by the developer's Qt installation (see README).
 # Point CMAKE_PREFIX_PATH at the Qt kit, e.g. C:/Qt/6.7.3/msvc2022_64.
-find_package(Qt6 REQUIRED COMPONENTS Widgets)
+find_package(Qt6 REQUIRED COMPONENTS Widgets SerialPort)
 
 qt_standard_project_setup()
 
