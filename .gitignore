@@ -1,0 +1,24 @@
+# --- Build output ---
+/build/
+build*/
+/out/
+/install/
+
+# --- CMake ---
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+CTestTestfile.cmake
+# Machine-specific presets (each developer keeps their own Qt path here)
+CMakeUserPresets.json
+
+# --- IDE / editor ---
+.vs/
+.vscode/
+.idea/
+*.user
+*.autosave
+
+# --- OS ---
+Thumbs.db
+.DS_Store
