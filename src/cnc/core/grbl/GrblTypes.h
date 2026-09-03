@@ -3,6 +3,7 @@
 #include <QString>
 
 #include <optional>
+#include <vector>
 
 namespace cnc {
 
@@ -29,9 +30,10 @@ struct GrblStatus
 
     bool hasPosition = false;
     bool positionIsMachine = false;   // true = MPos, false = WPos
-    double x = 0.0;
-    double y = 0.0;
-    double z = 0.0;
+    // One value per axis the controller reports, in order X, Y, Z, A, B, C...
+    // A 3-axis machine reports 3; a 4-axis machine reports 4. No axis count is
+    // assumed anywhere.
+    std::vector<double> position;
 
     std::optional<double> feed;       // current feed rate, if reported
 };

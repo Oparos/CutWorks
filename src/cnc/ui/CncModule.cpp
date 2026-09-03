@@ -2,6 +2,9 @@
 
 #include "cnc/core/GrblController.h"
 #include "cnc/core/JobStreamer.h"
+#include "cnc/core/gcode/GCodeParser.h"
+#include "cnc/core/gcode/Simulator.h"
+#include "cnc/ui/ConfigWidget.h"
 #include "cnc/ui/ConnectionWidget.h"
 #include "cnc/ui/ConsoleWidget.h"
 #include "cnc/ui/DroWidget.h"
@@ -9,16 +12,21 @@
 #include "cnc/ui/JogWidget.h"
 #include "cnc/ui/OverrideWidget.h"
 #include "cnc/ui/ThcWidget.h"
+#include "cnc/ui/render/GCodeScene.h"
+#include "cnc/ui/render/GCodeView.h"
 
 #include <QHBoxLayout>
 #include <QKeyEvent>
 #include <QScrollArea>
+#include <QTabWidget>
 #include <QTimer>
 #include <QVBoxLayout>
 
 namespace {
 constexpr int kPortPollIntervalMs = 1000;
 constexpr int kLeftPanelMaxWidth = 340;
+// Assumed rapid rate for time estimation when the machine's $110 is unknown.
+constexpr double kRapidRateMmMin = 3000.0;
 } // namespace
 
 CncModule::CncModule(QWidget* parent)
@@ -69,17 +77,31 @@ void CncModule::buildUi()
     leftScroll->setFrameShape(QFrame::NoFrame);
     leftScroll->setMaximumWidth(kLeftPanelMaxWidth);
 
-    // Right: the G-code job on top, the console below it.
+    // Right: a tabbed area — the workspace (preview + job + console) and settings.
     m_editor = new GCodeEditorWidget(this);
     m_console = new ConsoleWidget(this);
+    m_config = new ConfigWidget(this);
 
-    auto* rightLayout = new QVBoxLayout();
-    rightLayout->setContentsMargins(0, 0, 0, 0);
-    rightLayout->addWidget(m_editor, 3);
-    rightLayout->addWidget(m_console, 1);
+    m_scene = new GCodeScene(this);
+    m_view = new GCodeView(this);
+    m_view->setScene(m_scene);
+
+    auto* topRow = new QHBoxLayout();
+    topRow->addWidget(m_view, 3);
+    topRow->addWidget(m_editor, 1);
+
+    auto* workspace = new QWidget(this);
+    auto* workspaceLayout = new QVBoxLayout(workspace);
+    workspaceLayout->setContentsMargins(0, 0, 0, 0);
+    workspaceLayout->addLayout(topRow, 3);
+    workspaceLayout->addWidget(m_console, 1);
+
+    auto* tabs = new QTabWidget(this);
+    tabs->addTab(workspace, tr("Workspace"));
+    tabs->addTab(m_config, tr("Machine Configuration"));
 
     mainLayout->addWidget(leftScroll);
-    mainLayout->addLayout(rightLayout, 1);
+    mainLayout->addWidget(tabs, 1);
 }
 
 void CncModule::wireSignals()
@@ -151,6 +173,15 @@ void CncModule::wireSignals()
                                      cnc::LogCategory::Warning);
         }
     });
+    connect(m_editor, &GCodeEditorWidget::runFromHereRequested, this, [this](int line) {
+        if (m_controller->isConnected()) {
+            m_streamer->startFromLine(line);
+        }
+        else {
+            m_console->appendMessage(tr("Connect to the machine before running a job."),
+                                     cnc::LogCategory::Warning);
+        }
+    });
 
     connect(m_streamer, &cnc::JobStreamer::sendCommandRequested,
             m_controller, &cnc::GrblController::sendCommand);
@@ -163,6 +194,46 @@ void CncModule::wireSignals()
     });
     connect(m_controller, &cnc::GrblController::responseReceived,
             m_streamer, &cnc::JobStreamer::onResponse);
+
+    // --- Settings editor ($$) <-> controller ---
+    connect(m_config, &ConfigWidget::readRequested, this, [this]() {
+        m_config->clearSettings();
+        m_controller->requestSettings();
+    });
+    connect(m_config, &ConfigWidget::saveRequested, this, [this](const QStringList& commands) {
+        for (const QString& command : commands) {
+            m_controller->sendCommand(command);
+        }
+    });
+    connect(m_controller, &cnc::GrblController::settingReceived,
+            m_config, &ConfigWidget::addSetting);
+
+    // --- Preview: parse the loaded program, draw it, estimate time/size ---
+    connect(m_editor, &GCodeEditorWidget::fileLoaded, this,
+            [this](const QStringList& lines, const QString&) {
+                const cnc::Toolpath path = cnc::GCodeParser().parse(lines);
+                m_scene->setToolpath(path);
+                m_view->zoomToFit();
+
+                const cnc::JobEstimate est = cnc::estimateJob(path, kRapidRateMmMin);
+                const int minutes = static_cast<int>(est.seconds) / 60;
+                const int seconds = static_cast<int>(est.seconds) % 60;
+                m_console->appendMessage(
+                    tr("Estimated time: %1 min %2 s   |   size: %3 x %4 mm")
+                        .arg(minutes)
+                        .arg(seconds, 2, 10, QChar('0'))
+                        .arg(est.bounds.width(), 0, 'f', 1)
+                        .arg(est.bounds.height(), 0, 'f', 1),
+                    cnc::LogCategory::Info);
+            });
+
+    // Move the tool marker on the preview as status reports arrive.
+    connect(m_controller, &cnc::GrblController::statusUpdated, this,
+            [this](const cnc::GrblStatus& status) {
+                if (status.hasPosition && status.position.size() >= 2) {
+                    m_scene->setToolPosition(status.position[0], status.position[1]);
+                }
+            });
 }
 
 void CncModule::refreshPorts()

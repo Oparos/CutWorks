@@ -1,5 +1,7 @@
 #include "cnc/ui/DroWidget.h"
 
+#include "cnc/core/grbl/GrblProtocol.h"
+
 #include <QGridLayout>
 #include <QLabel>
 #include <QPushButton>
@@ -28,57 +30,54 @@ DroWidget::DroWidget(QWidget* parent)
     : QGroupBox(tr("Coordinates (DRO)"), parent)
 {
     auto* layout = new QGridLayout(this);
+    int row = 0;
 
+    layout->addWidget(new QLabel(tr("Status:"), this), row, 0);
     m_state = new QLabel(this);
     m_state->setObjectName(QStringLiteral("droState"));
+    layout->addWidget(m_state, row, 1, 1, 2);
+    ++row;
 
-    auto makeValue = [this]() {
-        auto* label = new QLabel(QStringLiteral("0.000"), this);
-        label->setObjectName(QStringLiteral("droValue"));
-        return label;
-    };
-    m_posX = makeValue();
-    m_posY = makeValue();
-    m_posZ = makeValue();
+    // One row per possible axis; rows past the reported axis count stay hidden
+    // (a grid row with only hidden widgets collapses to nothing).
+    for (int axis = 0; axis < kMaxAxes; ++axis) {
+        m_axisName[axis] = new QLabel(cnc::grblAxisLetter(axis) + QStringLiteral(":"), this);
+        m_axisValue[axis] = new QLabel(QStringLiteral("0.000"), this);
+        m_axisValue[axis]->setObjectName(QStringLiteral("droValue"));
 
+        layout->addWidget(m_axisName[axis], row, 0);
+        layout->addWidget(m_axisValue[axis], row, 1);
+
+        // Zero buttons only for the standard X/Y/Z axes.
+        if (axis < 3) {
+            const QString letter = cnc::grblAxisLetter(axis);
+            auto* zero = new QPushButton(tr("Zero %1").arg(letter), this);
+            layout->addWidget(zero, row, 2);
+            connect(zero, &QPushButton::clicked, this,
+                    [this, letter]() { emit zeroAxisRequested(letter); });
+        }
+
+        m_axisName[axis]->setVisible(axis < 3);   // default: X/Y/Z
+        m_axisValue[axis]->setVisible(axis < 3);
+        ++row;
+    }
+
+    layout->addWidget(new QLabel(tr("Feed (F):"), this), row, 0);
     m_feed = new QLabel(QStringLiteral("0"), this);
     m_feed->setObjectName(QStringLiteral("droFeed"));
+    layout->addWidget(m_feed, row, 1);
+    ++row;
 
-    m_zeroX = new QPushButton(tr("Zero X"), this);
-    m_zeroY = new QPushButton(tr("Zero Y"), this);
-    m_zeroZ = new QPushButton(tr("Zero Z"), this);
-    m_zeroAll = new QPushButton(tr("Zero All"), this);
-    m_home = new QPushButton(tr("Home Machine ($H)"), this);
-    m_probe = new QPushButton(tr("Probe Z (find material)"), this);
+    auto* zeroAll = new QPushButton(tr("Zero All"), this);
+    auto* home = new QPushButton(tr("Home Machine ($H)"), this);
+    auto* probe = new QPushButton(tr("Probe Z (find material)"), this);
+    layout->addWidget(zeroAll, row++, 0, 1, 3);
+    layout->addWidget(home, row++, 0, 1, 3);
+    layout->addWidget(probe, row++, 0, 1, 3);
 
-    layout->addWidget(new QLabel(tr("Status:"), this), 0, 0);
-    layout->addWidget(m_state, 0, 1, 1, 2);
-
-    layout->addWidget(new QLabel(QStringLiteral("X:"), this), 1, 0);
-    layout->addWidget(m_posX, 1, 1);
-    layout->addWidget(m_zeroX, 1, 2);
-
-    layout->addWidget(new QLabel(QStringLiteral("Y:"), this), 2, 0);
-    layout->addWidget(m_posY, 2, 1);
-    layout->addWidget(m_zeroY, 2, 2);
-
-    layout->addWidget(new QLabel(QStringLiteral("Z:"), this), 3, 0);
-    layout->addWidget(m_posZ, 3, 1);
-    layout->addWidget(m_zeroZ, 3, 2);
-
-    layout->addWidget(new QLabel(tr("Feed (F):"), this), 4, 0);
-    layout->addWidget(m_feed, 4, 1);
-
-    layout->addWidget(m_zeroAll, 5, 0, 1, 3);
-    layout->addWidget(m_home, 6, 0, 1, 3);
-    layout->addWidget(m_probe, 7, 0, 1, 3);
-
-    connect(m_zeroX, &QPushButton::clicked, this, [this]() { emit zeroAxisRequested(QStringLiteral("X")); });
-    connect(m_zeroY, &QPushButton::clicked, this, [this]() { emit zeroAxisRequested(QStringLiteral("Y")); });
-    connect(m_zeroZ, &QPushButton::clicked, this, [this]() { emit zeroAxisRequested(QStringLiteral("Z")); });
-    connect(m_zeroAll, &QPushButton::clicked, this, [this]() { emit zeroAxisRequested(QStringLiteral("ALL")); });
-    connect(m_home, &QPushButton::clicked, this, &DroWidget::homeRequested);
-    connect(m_probe, &QPushButton::clicked, this, &DroWidget::probeRequested);
+    connect(zeroAll, &QPushButton::clicked, this, [this]() { emit zeroAxisRequested(QStringLiteral("ALL")); });
+    connect(home, &QPushButton::clicked, this, &DroWidget::homeRequested);
+    connect(probe, &QPushButton::clicked, this, &DroWidget::probeRequested);
 
     showDisconnected();
 }
@@ -88,10 +87,17 @@ void DroWidget::updateStatus(const cnc::GrblStatus& status)
     setStateText(status.rawState, colorForState(status.state));
 
     if (status.hasPosition) {
-        m_posX->setText(formatCoord(status.x));
-        m_posY->setText(formatCoord(status.y));
-        m_posZ->setText(formatCoord(status.z));
+        const int axes = static_cast<int>(status.position.size());
+        for (int axis = 0; axis < kMaxAxes; ++axis) {
+            const bool present = axis < axes;
+            m_axisName[axis]->setVisible(present);
+            m_axisValue[axis]->setVisible(present);
+            if (present) {
+                m_axisValue[axis]->setText(formatCoord(status.position[axis]));
+            }
+        }
     }
+
     if (status.feed) {
         m_feed->setText(tr("%1 mm/min").arg(QString::number(*status.feed, 'f', 0)));
     }

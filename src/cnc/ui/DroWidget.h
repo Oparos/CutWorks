@@ -4,12 +4,16 @@
 
 #include <QGroupBox>
 
+#include <array>
+
 class QLabel;
 class QPushButton;
 
-// Digital read-out: machine state, X/Y/Z position and current feed, plus the
-// zero / home / probe buttons. Displays what the backend reports and emits the
-// user's intents; it holds no machine logic.
+// Digital read-out: machine state, per-axis position and current feed, plus the
+// zero / home / probe buttons. It shows exactly as many axis rows as the
+// controller reports (X/Y/Z for a 3-axis machine, plus A/B/C when present), so
+// no axis count is hard-coded. Displays what the backend reports; holds no
+// machine logic.
 class DroWidget : public QGroupBox
 {
     Q_OBJECT
@@ -28,16 +32,10 @@ signals:
 private:
     void setStateText(const QString& text, const QString& color);
 
-    QLabel* m_state = nullptr;
-    QLabel* m_posX = nullptr;
-    QLabel* m_posY = nullptr;
-    QLabel* m_posZ = nullptr;
-    QLabel* m_feed = nullptr;
+    static constexpr int kMaxAxes = 6;  // X Y Z A B C
 
-    QPushButton* m_zeroX = nullptr;
-    QPushButton* m_zeroY = nullptr;
-    QPushButton* m_zeroZ = nullptr;
-    QPushButton* m_zeroAll = nullptr;
-    QPushButton* m_home = nullptr;
-    QPushButton* m_probe = nullptr;
+    QLabel* m_state = nullptr;
+    std::array<QLabel*, kMaxAxes> m_axisName{};
+    std::array<QLabel*, kMaxAxes> m_axisValue{};
+    QLabel* m_feed = nullptr;
 };

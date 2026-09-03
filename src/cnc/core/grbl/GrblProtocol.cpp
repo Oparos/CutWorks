@@ -42,6 +42,16 @@ GrblResponse classifyGrblLine(const QString& line)
     return {GrblResponseKind::Unknown, 0};
 }
 
+QString grblAxisLetter(int index)
+{
+    static const char* const letters[] = {"X", "Y", "Z", "A", "B", "C"};
+    constexpr int count = sizeof(letters) / sizeof(letters[0]);
+    if (index >= 0 && index < count) {
+        return QString::fromLatin1(letters[index]);
+    }
+    return QStringLiteral("?");
+}
+
 GrblState grblStateFromString(const QString& token)
 {
     // States can carry a sub-code, e.g. "Hold:0" or "Door:1".
@@ -82,11 +92,13 @@ std::optional<GrblStatus> parseGrblStatus(const QString& line)
         if (field.startsWith(QLatin1String("MPos:")) || field.startsWith(QLatin1String("WPos:"))) {
             status.positionIsMachine = field.startsWith(QLatin1String("MPos:"));
             const QStringList coords = field.mid(5).split(',');
-            if (coords.size() >= 3) {
+            if (!coords.isEmpty()) {
                 status.hasPosition = true;
-                status.x = coords.at(0).toDouble();
-                status.y = coords.at(1).toDouble();
-                status.z = coords.at(2).toDouble();
+                status.position.clear();
+                status.position.reserve(coords.size());
+                for (const QString& coord : coords) {
+                    status.position.push_back(coord.toDouble());
+                }
             }
         }
         else if (field.startsWith(QLatin1String("FS:"))) {

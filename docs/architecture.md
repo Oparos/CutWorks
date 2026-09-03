@@ -71,6 +71,16 @@ The CNC module is the first to be split into a backend/UI boundary:
   - `grbl/GrblProtocol` + `grbl/GrblTypes` — pure functions and value types:
     classify a received line, parse status/setting lines, GRBL error/alarm text
     tables, and command-byte encoding (real-time bytes vs newline-terminated).
+  - `grbl/GrblSettings` — the `$`-code → human-description dictionary used by the
+    settings editor (GRBL knowledge, kept out of the UI).
+  - `gcode/` — `GCodeParser` turns a program into a `Toolpath` (a list of
+    line/arc segments tagged rapid vs cut), tracking modal state (G0-G3,
+    G90/G91, feed) and tolerating any axis word (X/Y/Z/A/...). `Simulator`
+    estimates run time and bounding box from that toolpath. Both are Qt-light
+    and 2D (the plasma cutting plane).
+- `ui/render/` (Qt Widgets): `GCodeScene` draws the `Toolpath` (rapids dashed,
+  cuts solid, arcs sampled) with a tool-position marker; `GCodeView` is the
+  pan/zoom viewport (Y up).
   - `GrblController` — the backend brain: owns the transport, polls status, and
     turns every incoming line into typed signals (`statusUpdated`,
     `errorReceived`, `alarmReceived`, `settingReceived`, `lineLogged`,
@@ -158,5 +168,9 @@ same discipline:
 | CNC module — G-code streaming (load, play/pause/stop, dry-run) | ✅ done |
 | CNC module — jog (buttons + keyboard, step & continuous) | ✅ done |
 | CNC module — feed overrides + THC (torch height control) | ✅ done |
-| CNC module — config ($$) / preview / run-from-line | ⬜ not started |
+| CNC module — settings editor ($$ read/edit/save) | ✅ done |
+| CNC module — G-code parser + path preview + time/size estimate | ✅ done |
+| CNC module — run-from-line (mid-program resume with catch-up) | ✅ done |
+| N-axis-ready position model (DRO shows reported axes) | ✅ done |
+| **CNC module — complete** | ✅ |
 | CAD → CAM → CNC data flow | ⬜ not started |

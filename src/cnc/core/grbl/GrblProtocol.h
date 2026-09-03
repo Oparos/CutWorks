@@ -22,6 +22,10 @@ std::optional<GrblSetting> parseGrblSetting(const QString& line);
 // Map a GRBL state token ("Idle", "Hold:0", ...) to the GrblState enum.
 GrblState grblStateFromString(const QString& token);
 
+// Conventional axis letter for a position index: 0->X, 1->Y, 2->Z, 3->A,
+// 4->B, 5->C. Returns "?" beyond that.
+QString grblAxisLetter(int index);
+
 // Human-readable text for a GRBL error / alarm code.
 QString grblErrorText(int code);
 QString grblAlarmText(int code);

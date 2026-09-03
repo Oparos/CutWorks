@@ -4,9 +4,12 @@
 
 class QTimer;
 class ConnectionWidget;
+class ConfigWidget;
 class ConsoleWidget;
 class DroWidget;
 class GCodeEditorWidget;
+class GCodeScene;
+class GCodeView;
 class JogWidget;
 class OverrideWidget;
 class ThcWidget;
@@ -45,6 +48,9 @@ private:
     ThcWidget* m_thc = nullptr;
     ConsoleWidget* m_console = nullptr;
     GCodeEditorWidget* m_editor = nullptr;
+    ConfigWidget* m_config = nullptr;
+    GCodeScene* m_scene = nullptr;
+    GCodeView* m_view = nullptr;
 
     QTimer* m_portTimer = nullptr;
 };

@@ -5,6 +5,7 @@
 #include <QHBoxLayout>
 #include <QIcon>
 #include <QListWidget>
+#include <QMenu>
 #include <QMessageBox>
 #include <QPushButton>
 #include <QTextStream>
@@ -30,6 +31,7 @@ GCodeEditorWidget::GCodeEditorWidget(QWidget* parent)
 
     m_list = new QListWidget(this);
     m_list->setObjectName(QStringLiteral("gcodeList"));
+    m_list->setContextMenuPolicy(Qt::CustomContextMenu);
 
     auto* controls = new QHBoxLayout();
     controls->addWidget(m_playButton);
@@ -48,6 +50,19 @@ GCodeEditorWidget::GCodeEditorWidget(QWidget* parent)
     connect(m_stopButton, &QPushButton::clicked, this, &GCodeEditorWidget::stopRequested);
     connect(m_dryRunButton, &QPushButton::toggled, this, &GCodeEditorWidget::dryRunToggled);
     connect(m_list, &QListWidget::itemChanged, this, &GCodeEditorWidget::onItemChanged);
+
+    connect(m_list, &QListWidget::customContextMenuRequested, this, [this](const QPoint& pos) {
+        QListWidgetItem* item = m_list->itemAt(pos);
+        if (!item) {
+            return;
+        }
+        const int line = m_list->row(item);
+        QMenu menu(this);
+        QAction* runFromHere = menu.addAction(tr("Run from this line"));
+        connect(runFromHere, &QAction::triggered, this,
+                [this, line]() { emit runFromHereRequested(line); });
+        menu.exec(m_list->viewport()->mapToGlobal(pos));
+    });
 }
 
 bool GCodeEditorWidget::loadGCodeFile(const QString& filePath)

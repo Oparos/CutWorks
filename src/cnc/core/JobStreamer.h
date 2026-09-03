@@ -34,7 +34,8 @@ public:
     JobState state() const { return m_state; }
 
 public slots:
-    void start();          // begin streaming from the top (only while Idle)
+    void start();           // begin streaming from the top (only while Idle)
+    void startFromLine(int line);  // resume mid-program with a catch-up block
     void pauseOrResume();   // Running -> feed hold, Paused -> cycle start
     void stop();            // abort + soft reset
     void reset();           // silent state reset (e.g. connection lost)
@@ -57,6 +58,9 @@ private:
     int m_index = 0;
     JobState m_state = JobState::Idle;
     bool m_dryRun = false;
+    // "ok" responses still expected from a resume catch-up block, before normal
+    // line streaming may begin.
+    int m_pendingCatchUpOks = 0;
 };
 
 } // namespace cnc

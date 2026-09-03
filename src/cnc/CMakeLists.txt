@@ -18,10 +18,19 @@ add_library(cutworks_cnc STATIC
     core/grbl/GrblTypes.h
     core/grbl/GrblProtocol.h
     core/grbl/GrblProtocol.cpp
+    core/grbl/GrblSettings.h
+    core/grbl/GrblSettings.cpp
+    core/gcode/Toolpath.h
+    core/gcode/GCodeParser.h
+    core/gcode/GCodeParser.cpp
+    core/gcode/Simulator.h
+    core/gcode/Simulator.cpp
 
     # --- ui (presentation) ---
     ui/CncModule.h
     ui/CncModule.cpp
+    ui/ConfigWidget.h
+    ui/ConfigWidget.cpp
     ui/ConnectionWidget.h
     ui/ConnectionWidget.cpp
     ui/ConsoleWidget.h
@@ -36,6 +45,10 @@ add_library(cutworks_cnc STATIC
     ui/OverrideWidget.cpp
     ui/ThcWidget.h
     ui/ThcWidget.cpp
+    ui/render/GCodeScene.h
+    ui/render/GCodeScene.cpp
+    ui/render/GCodeView.h
+    ui/render/GCodeView.cpp
 )
 
 target_include_directories(cutworks_cnc PUBLIC ${CMAKE_SOURCE_DIR}/src)

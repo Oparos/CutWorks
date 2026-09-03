@@ -1,5 +1,7 @@
 #include "cnc/core/JobStreamer.h"
 
+#include "cnc/core/gcode/GCodeParser.h"
+
 #include <QRegularExpression>
 
 namespace cnc {
@@ -35,8 +37,56 @@ void JobStreamer::start()
     if (m_state != JobState::Idle || m_lines.isEmpty()) {
         return;
     }
+    m_pendingCatchUpOks = 0;
     setState(JobState::Running);
     sendNextLine();
+}
+
+void JobStreamer::startFromLine(int line)
+{
+    if (m_state != JobState::Idle || line < 0 || line >= m_lines.size()) {
+        return;
+    }
+
+    const GCodeModalState modal = GCodeParser().modalStateBefore(m_lines, line);
+
+    // Build a catch-up block that restores the machine to the state it would be
+    // in just before `line`, then start streaming from there. We count the
+    // commands so their "ok"s are consumed before the real job advances.
+    int count = 0;
+    auto emitCmd = [&](const QString& command) {
+        emit sendCommandRequested(command);
+        ++count;
+    };
+
+    emitCmd(modal.absolute ? QStringLiteral("G90") : QStringLiteral("G91"));
+    if (modal.feed > 0.0) {
+        emitCmd(QStringLiteral("F%1").arg(modal.feed));
+    }
+    emitCmd(QStringLiteral("G0 Z10"));  // raise the torch to a safe height first
+    if (modal.hasXY) {
+        emitCmd(QStringLiteral("G0 X%1 Y%2").arg(modal.pos.x).arg(modal.pos.y));
+    }
+    if (modal.hasZ) {
+        emitCmd(QStringLiteral("G0 Z%1").arg(modal.z));
+    }
+    if (!m_dryRun && (modal.torch == 3 || modal.torch == 4)) {
+        emitCmd(modal.torch == 3 ? QStringLiteral("M3") : QStringLiteral("M4"));
+        emitCmd(QStringLiteral("G4 P0.5"));  // dwell for the arc to establish
+    }
+    else {
+        emitCmd(QStringLiteral("M5"));
+    }
+
+    m_index = line;
+    m_pendingCatchUpOks = count;
+    setState(JobState::Running);
+    emit currentLineChanged(line);
+
+    if (count == 0) {
+        sendNextLine();
+    }
+    // otherwise streaming begins in onResponse once the catch-up "ok"s arrive
 }
 
 void JobStreamer::pauseOrResume()
@@ -54,6 +104,7 @@ void JobStreamer::pauseOrResume()
 void JobStreamer::stop()
 {
     m_index = 0;
+    m_pendingCatchUpOks = 0;
     setState(JobState::Idle);
     emit currentLineChanged(-1);
     emit sendCommandRequested(QStringLiteral("\x18"));  // soft reset
@@ -62,6 +113,7 @@ void JobStreamer::stop()
 void JobStreamer::reset()
 {
     m_index = 0;
+    m_pendingCatchUpOks = 0;
     setState(JobState::Idle);
     emit currentLineChanged(-1);
 }
@@ -73,6 +125,13 @@ void JobStreamer::onResponse(GrblResponseKind kind, int /*code*/)
     }
 
     if (kind == GrblResponseKind::Ok) {
+        // While catching up, consume the block's "ok"s before streaming lines.
+        if (m_pendingCatchUpOks > 0) {
+            if (--m_pendingCatchUpOks == 0) {
+                sendNextLine();
+            }
+            return;
+        }
         sendNextLine();
     }
     else if (kind == GrblResponseKind::Error || kind == GrblResponseKind::Alarm) {

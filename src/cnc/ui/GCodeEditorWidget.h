@@ -30,6 +30,7 @@ signals:
     void pauseRequested();
     void stopRequested();
     void dryRunToggled(bool enabled);
+    void runFromHereRequested(int line);
 
 public slots:
     void onJobStateChanged(cnc::JobState state);
