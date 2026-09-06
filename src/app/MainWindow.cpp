@@ -1,6 +1,6 @@
 #include "app/MainWindow.h"
 
-#include "cad/CadModule.h"
+#include "cad/ui/CadModule.h"
 #include "cam/CamModule.h"
 #include "cnc/ui/CncModule.h"
 

@@ -49,8 +49,30 @@ reference application. Only the module shells exist today.
 ### CAD — geometry design
 Draw and import 2D geometry: lines, arcs, circles, polylines. Editing tools
 (move, rotate, trim, extend, fillet, chamfer, select), layers, snapping,
-undo/redo, and DXF import/export.
-Dependency to add during migration: **libdxfrw** (vendored) for DXF I/O.
+undo/redo, and DXF (and later other) import/export.
+
+The CAD module **separates the domain data model from rendering** (unlike the
+legacy app, where entities were `QGraphicsItem`s — which fused geometry with Qt
+and caused ownership/leak problems):
+
+- `core/` (domain, no `QGraphicsItem`/widgets):
+  - `entities/` — pure geometry (`CadEntity` base with `path()`, `translate`,
+    `rotate`, `clone`; `LineEntity`, …). Uses Qt Gui value types only.
+  - `CadDocument` — the single owner of all entities (`unique_ptr`, keyed by id);
+    emits `entityAdded/Removed/Changed`. No widget dependency.
+  - `commands/` — `QUndoCommand`s that change the document by transferring entity
+    ownership (add / take), so nothing leaks or double-frees.
+- `ui/` (Qt Widgets):
+  - `render/` — `EntityItem` (a QGraphicsItem that just draws an entity's
+    `path()`), `CadScene` (observes the document, one item per entity), `CadView`
+    (Y-up pan/zoom viewport).
+  - `tools/` — `CadTool` base + drawing/editing tools that push commands.
+    Tools support **parametric input** (typed Length/Angle, …) via
+    `inputFields()`/`applyInput()`, shown in `ToolInputBar`.
+
+File formats will be importer/exporter classes converting file ↔ `CadDocument`,
+so adding a format never touches rendering. Dependency to add for DXF:
+**libdxfrw** (vendored). Y stays up in the domain; only the view flips it.
 
 ### CAM — toolpath generation
 Build contours from geometry, generate cutting toolpaths with lead-in/lead-out,
@@ -161,7 +183,8 @@ same discipline:
 | Build system (CMake, presets) | ✅ done (skeleton) |
 | Application shell + navigation | ✅ done |
 | Theming + high-DPI foundation | ✅ done |
-| CAD module | ⬜ placeholder only |
+| CAD module — foundation (document model, rendering, line tool, undo, parametric input) | ✅ done |
+| CAD module — more entities, editing tools, snapping, layers, I/O, icons | ⬜ in progress |
 | CAM module | ⬜ placeholder only |
 | CNC module — backend core (transport, GRBL protocol, controller) | ✅ done |
 | CNC module — UI (connection, console, DRO) | ✅ done |
