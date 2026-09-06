@@ -108,6 +108,11 @@ void CadView::mouseReleaseEvent(QMouseEvent* event)
         event->accept();
         return;
     }
+    if (m_tool && event->button() == Qt::LeftButton) {
+        m_tool->onMouseRelease(mapToScene(event->position().toPoint()));
+        event->accept();
+        return;
+    }
     QGraphicsView::mouseReleaseEvent(event);
 }
 

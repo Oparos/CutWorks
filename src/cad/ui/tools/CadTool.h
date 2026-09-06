@@ -30,6 +30,7 @@ public:
 
     virtual void onMousePress(const QPointF& scenePos) {}
     virtual void onMouseMove(const QPointF& scenePos) {}
+    virtual void onMouseRelease(const QPointF& scenePos) {}
     virtual void onKeyPress(int key) {}
 
     // End the current in-progress operation (e.g. right-click), keeping the tool
@@ -46,7 +47,8 @@ public:
     virtual void applyInput(const QVector<double>& values) {}
 
 signals:
-    void inputChanged();  // parametric fields changed (e.g. mouse moved)
+    void inputChanged();       // parametric fields changed (e.g. mouse moved)
+    void requestInputFocus();  // ask the UI to move focus into the input bar now
 };
 
 } // namespace cad

@@ -1,6 +1,7 @@
 #include "cad/ui/ToolInputBar.h"
 
 #include <QHBoxLayout>
+#include <QKeyEvent>
 #include <QLabel>
 #include <QLineEdit>
 
@@ -18,13 +19,31 @@ ToolInputBar::ToolInputBar(QWidget* parent)
         layout->addWidget(m_edits[i]);
         m_labels[i]->hide();
         m_edits[i]->hide();
+        m_edits[i]->installEventFilter(this);  // catch Esc to cancel
         connect(m_edits[i], &QLineEdit::returnPressed, this, [this, i]() { onReturnPressed(i); });
+        // textEdited fires only on real user typing (not our setText) — once the
+        // user edits a field we stop overwriting it with live values.
+        connect(m_edits[i], &QLineEdit::textEdited, this, [this, i]() { m_dirty[i] = true; });
     }
     layout->addStretch();
 }
 
+bool ToolInputBar::eventFilter(QObject* watched, QEvent* event)
+{
+    if (event->type() == QEvent::KeyPress) {
+        auto* keyEvent = static_cast<QKeyEvent*>(event);
+        if (keyEvent->key() == Qt::Key_Escape) {
+            emit cancelRequested();
+            return true;
+        }
+    }
+    return QWidget::eventFilter(watched, event);
+}
+
 void ToolInputBar::focusFirstField()
 {
+    // A fresh operation: allow live values to flow again until the user types.
+    m_dirty.fill(false);
     if (m_visibleCount > 0) {
         m_edits[0]->setFocus();
         m_edits[0]->selectAll();
@@ -55,9 +74,14 @@ void ToolInputBar::setFields(const QList<cad::CadTool::InputField>& fields)
         if (!visible) {
             continue;
         }
-        m_labels[i]->setText(fields[i].label + QStringLiteral(":"));
-        // Don't overwrite a value the user is in the middle of typing.
-        if (!m_edits[i]->hasFocus()) {
+        const QString label = fields[i].label + QStringLiteral(":");
+        if (m_labels[i]->text() != label) {
+            m_labels[i]->setText(label);
+            m_dirty[i] = false;  // a different parameter now — accept live values
+        }
+        // Keep showing the live value (even while focused) until the user edits
+        // this field themselves.
+        if (!m_dirty[i]) {
             m_edits[i]->setText(QString::number(fields[i].value, 'f', 3));
         }
     }

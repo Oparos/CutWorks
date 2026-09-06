@@ -18,6 +18,11 @@ void EntityItem::refresh()
     update();
 }
 
+int EntityItem::entityId() const
+{
+    return m_entity->id();
+}
+
 QRectF EntityItem::boundingRect() const
 {
     // A little margin so the (cosmetic) stroke is never clipped.

@@ -10,6 +10,7 @@ namespace cad {
 
 enum class EntityType
 {
+    Point,
     Line,
     Circle,
     Arc,

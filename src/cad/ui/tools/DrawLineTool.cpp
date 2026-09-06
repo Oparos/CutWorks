@@ -45,6 +45,7 @@ void DrawLineTool::onMousePress(const QPointF& scenePos)
         m_hasStart = true;
         m_preview = makePreview(m_scene, m_start);
         emit inputChanged();
+        emit requestInputFocus();  // let the user type Length/Angle immediately
     }
     else {
         commitLine(scenePos);
@@ -123,6 +124,7 @@ void DrawLineTool::commitLine(const QPointF& end)
     m_hasStart = true;
     m_preview = makePreview(m_scene, m_start);
     emit inputChanged();
+    emit requestInputFocus();  // keep typing for the next segment in the chain
 }
 
 void DrawLineTool::clearPreview()

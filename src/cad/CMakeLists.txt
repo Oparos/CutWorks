@@ -10,10 +10,20 @@ add_library(cutworks_cad STATIC
     core/entities/CadEntity.h
     core/entities/LineEntity.h
     core/entities/LineEntity.cpp
+    core/entities/CircleEntity.h
+    core/entities/CircleEntity.cpp
+    core/entities/PointEntity.h
+    core/entities/PointEntity.cpp
+    core/entities/PolylineEntity.h
+    core/entities/PolylineEntity.cpp
+    core/entities/ArcEntity.h
+    core/entities/ArcEntity.cpp
     core/CadDocument.h
     core/CadDocument.cpp
     core/commands/AddEntityCommand.h
     core/commands/AddEntityCommand.cpp
+    core/commands/RemoveEntityCommand.h
+    core/commands/RemoveEntityCommand.cpp
 
     # --- ui (presentation) ---
     ui/CadModule.h
@@ -27,8 +37,22 @@ add_library(cutworks_cad STATIC
     ui/render/CadView.h
     ui/render/CadView.cpp
     ui/tools/CadTool.h
+    ui/tools/SelectTool.h
+    ui/tools/SelectTool.cpp
     ui/tools/DrawLineTool.h
     ui/tools/DrawLineTool.cpp
+    ui/tools/DrawCircleTool.h
+    ui/tools/DrawCircleTool.cpp
+    ui/tools/DrawPointTool.h
+    ui/tools/DrawPointTool.cpp
+    ui/tools/DrawPolylineTool.h
+    ui/tools/DrawPolylineTool.cpp
+    ui/tools/DrawRectangleTool.h
+    ui/tools/DrawRectangleTool.cpp
+    ui/tools/DrawArcTool.h
+    ui/tools/DrawArcTool.cpp
+    ui/tools/DrawPolygonTool.h
+    ui/tools/DrawPolygonTool.cpp
 )
 
 target_include_directories(cutworks_cad PUBLIC ${CMAKE_SOURCE_DIR}/src)

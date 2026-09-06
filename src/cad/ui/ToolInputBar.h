@@ -25,11 +25,15 @@ public:
     // user is editing are left untouched.
     void setFields(const QList<cad::CadTool::InputField>& fields);
 
-    // Move keyboard focus into the first field (used when the user presses Tab).
+    // Move keyboard focus into the first field.
     void focusFirstField();
 
 signals:
     void committed(const QVector<double>& values);
+    void cancelRequested();  // Esc pressed while a field had focus
+
+protected:
+    bool eventFilter(QObject* watched, QEvent* event) override;
 
 private:
     void onReturnPressed(int fieldIndex);
@@ -38,5 +42,6 @@ private:
     static constexpr int kMaxFields = 4;
     std::array<QLabel*, kMaxFields> m_labels{};
     std::array<QLineEdit*, kMaxFields> m_edits{};
+    std::array<bool, kMaxFields> m_dirty{};  // user typed here -> stop live updates
     int m_visibleCount = 0;
 };

@@ -184,7 +184,10 @@ same discipline:
 | Application shell + navigation | ✅ done |
 | Theming + high-DPI foundation | ✅ done |
 | CAD module — foundation (document model, rendering, line tool, undo, parametric input) | ✅ done |
-| CAD module — more entities, editing tools, snapping, layers, I/O, icons | ⬜ in progress |
+| CAD module — drawing tools: line, polyline, rectangle, circle, arc, polygon, point | ✅ done |
+| CAD module — selection (click + window/crossing) + delete | ✅ done |
+| CAD module — editing: move / rotate / copy-paste (ModifyEntityCommand) | ⬜ next |
+| CAD module — selection/edit, snapping, layers, editing tools, I/O, icons | ⬜ not started |
 | CAM module | ⬜ placeholder only |
 | CNC module — backend core (transport, GRBL protocol, controller) | ✅ done |
 | CNC module — UI (connection, console, DRO) | ✅ done |

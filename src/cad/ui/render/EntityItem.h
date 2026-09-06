@@ -17,6 +17,9 @@ public:
     // Re-read geometry after the entity changed.
     void refresh();
 
+    // Id of the entity this item renders (used to map selection back to the document).
+    int entityId() const;
+
     QRectF boundingRect() const override;
     QPainterPath shape() const override;
     void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget) override;
