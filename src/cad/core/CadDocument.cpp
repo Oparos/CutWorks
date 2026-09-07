@@ -32,10 +32,29 @@ std::unique_ptr<CadEntity> CadDocument::takeEntity(int id)
     if (it == m_entities.end()) {
         return nullptr;
     }
+    // Notify FIRST, while the entity is still present, so the view can remove its
+    // item using valid geometry (otherwise the scene's spatial index keeps a
+    // dangling pointer to the just-deleted item -> crash on the next query).
+    emit entityRemoved(id);
     std::unique_ptr<CadEntity> entity = std::move(it->second);
     m_entities.erase(it);
-    emit entityRemoved(id);
     return entity;
+}
+
+std::unique_ptr<CadEntity> CadDocument::swapEntity(int id, std::unique_ptr<CadEntity> replacement)
+{
+    const auto it = m_entities.find(id);
+    if (it == m_entities.end()) {
+        return replacement;  // unknown id: hand it back, nothing changed
+    }
+    replacement->setId(id);
+    // Notify the view BEFORE the bounds change so it can update its index while
+    // the old geometry is still current.
+    emit entityAboutToChange(id);
+    std::unique_ptr<CadEntity> previous = std::move(it->second);
+    it->second = std::move(replacement);
+    emit entityChanged(id);
+    return previous;
 }
 
 CadEntity* CadDocument::entity(int id) const

@@ -5,6 +5,7 @@
 #include <QBrush>
 #include <QGraphicsRectItem>
 #include <QGraphicsScene>
+#include <QGuiApplication>
 #include <QPen>
 
 namespace cad {
@@ -31,15 +32,25 @@ SelectTool::SelectTool(QGraphicsScene* scene, QObject* parent)
 void SelectTool::onMousePress(const QPointF& scenePos)
 {
     m_pressPos = scenePos;
+    const bool ctrl = QGuiApplication::keyboardModifiers().testFlag(Qt::ControlModifier);
 
     if (EntityItem* hit = entityItemAt(m_scene, scenePos)) {
-        m_scene->clearSelection();
-        hit->setSelected(true);
+        if (ctrl) {
+            hit->setSelected(!hit->isSelected());  // toggle, keep the rest
+        }
+        else {
+            m_scene->clearSelection();
+            hit->setSelected(true);
+        }
         m_banding = false;
     }
     else {
-        // Empty space: start a selection box and clear the current selection.
-        m_scene->clearSelection();
+        // Empty space: start a selection box. Without Ctrl this replaces the
+        // current selection; with Ctrl it adds to it.
+        m_additive = ctrl;
+        if (!m_additive) {
+            m_scene->clearSelection();
+        }
         m_banding = true;
     }
 }
@@ -81,7 +92,7 @@ void SelectTool::onMouseRelease(const QPointF& scenePos)
     const Qt::ItemSelectionMode mode =
         window ? Qt::ContainsItemShape : Qt::IntersectsItemShape;
 
-    m_scene->clearSelection();
+    // Non-additive already cleared on press; here we only add the box's items.
     for (QGraphicsItem* item : m_scene->items(rect, mode)) {
         if (dynamic_cast<EntityItem*>(item)) {
             item->setSelected(true);

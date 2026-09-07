@@ -1,5 +1,7 @@
 #include "cad/core/entities/PolylineEntity.h"
 
+#include "cad/core/geometry/Geometry.h"
+
 #include <QTransform>
 
 namespace cad {
@@ -58,6 +60,14 @@ void PolylineEntity::rotate(const QPointF& pivot, double degrees)
                              .translate(-pivot.x(), -pivot.y());
     for (PolyVertex& v : m_vertices) {
         v.pos = t.map(v.pos);
+    }
+}
+
+void PolylineEntity::mirror(const QPointF& axisA, const QPointF& axisB)
+{
+    for (PolyVertex& v : m_vertices) {
+        v.pos = reflectPoint(v.pos, axisA, axisB);
+        v.bulge = -v.bulge;  // reflection reverses arc direction
     }
 }
 

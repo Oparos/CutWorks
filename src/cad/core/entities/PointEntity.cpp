@@ -1,5 +1,7 @@
 #include "cad/core/entities/PointEntity.h"
 
+#include "cad/core/geometry/Geometry.h"
+
 #include <QTransform>
 
 namespace cad {
@@ -40,6 +42,11 @@ void PointEntity::rotate(const QPointF& pivot, double degrees)
                              .rotate(degrees)
                              .translate(-pivot.x(), -pivot.y());
     m_pos = t.map(m_pos);
+}
+
+void PointEntity::mirror(const QPointF& axisA, const QPointF& axisB)
+{
+    m_pos = reflectPoint(m_pos, axisA, axisB);
 }
 
 } // namespace cad

@@ -26,6 +26,7 @@ protected:
 private:
     void onEntityAdded(int id);
     void onEntityRemoved(int id);
+    void onEntityAboutToChange(int id);
     void onEntityChanged(int id);
 
     cad::CadDocument* m_document;

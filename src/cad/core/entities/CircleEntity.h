@@ -15,6 +15,7 @@ public:
     QPainterPath path() const override;
     void translate(const QPointF& delta) override;
     void rotate(const QPointF& pivot, double degrees) override;
+    void mirror(const QPointF& axisA, const QPointF& axisB) override;
 
     QPointF center() const { return m_center; }
     double radius() const { return m_radius; }

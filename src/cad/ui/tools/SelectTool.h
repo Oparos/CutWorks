@@ -29,6 +29,7 @@ private:
 
     QGraphicsScene* m_scene;
     bool m_banding = false;
+    bool m_additive = false;  // Ctrl held: add to the current selection
     QPointF m_pressPos;
     QGraphicsRectItem* m_band = nullptr;
 };

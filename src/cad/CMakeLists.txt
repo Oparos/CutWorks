@@ -7,6 +7,7 @@
 #   ui/   — rendering (QGraphicsScene/Item/View), tools and panels.
 add_library(cutworks_cad STATIC
     # --- core (domain) ---
+    core/geometry/Geometry.h
     core/entities/CadEntity.h
     core/entities/LineEntity.h
     core/entities/LineEntity.cpp
@@ -24,6 +25,8 @@ add_library(cutworks_cad STATIC
     core/commands/AddEntityCommand.cpp
     core/commands/RemoveEntityCommand.h
     core/commands/RemoveEntityCommand.cpp
+    core/commands/ModifyEntityCommand.h
+    core/commands/ModifyEntityCommand.cpp
 
     # --- ui (presentation) ---
     ui/CadModule.h
@@ -39,6 +42,12 @@ add_library(cutworks_cad STATIC
     ui/tools/CadTool.h
     ui/tools/SelectTool.h
     ui/tools/SelectTool.cpp
+    ui/tools/MoveTool.h
+    ui/tools/MoveTool.cpp
+    ui/tools/RotateTool.h
+    ui/tools/RotateTool.cpp
+    ui/tools/MirrorTool.h
+    ui/tools/MirrorTool.cpp
     ui/tools/DrawLineTool.h
     ui/tools/DrawLineTool.cpp
     ui/tools/DrawCircleTool.h

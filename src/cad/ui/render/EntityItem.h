@@ -3,27 +3,30 @@
 #include <QGraphicsItem>
 
 namespace cad {
+class CadDocument;
 class CadEntity;
 }
 
-// A thin QGraphicsItem that renders one domain entity. It does NOT own the
-// entity (the document does); it only reads its geometry to draw and hit-test.
-// One item per entity, kept in sync by CadScene.
+// A thin QGraphicsItem that renders one document entity, looked up by id. It
+// does not cache the entity pointer — it fetches it from the document each time —
+// so an edit that replaces the entity object (ModifyEntityCommand) never leaves
+// a dangling pointer here. One item per entity, kept in sync by CadScene.
 class EntityItem : public QGraphicsItem
 {
 public:
-    explicit EntityItem(cad::CadEntity* entity);
+    EntityItem(cad::CadDocument* document, int id);
 
-    // Re-read geometry after the entity changed.
-    void refresh();
-
-    // Id of the entity this item renders (used to map selection back to the document).
-    int entityId() const;
+    void prepareForChange();  // before the entity's geometry changes
+    void refresh();           // after: repaint
+    int entityId() const { return m_id; }
 
     QRectF boundingRect() const override;
     QPainterPath shape() const override;
     void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget) override;
 
 private:
-    cad::CadEntity* m_entity;
+    cad::CadEntity* entity() const;
+
+    cad::CadDocument* m_document;
+    int m_id;
 };

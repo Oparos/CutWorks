@@ -34,6 +34,7 @@ public:
 
     virtual void translate(const QPointF& delta) = 0;
     virtual void rotate(const QPointF& pivot, double degrees) = 0;
+    virtual void mirror(const QPointF& axisA, const QPointF& axisB) = 0;
 
     QRectF bounds() const { return path().boundingRect(); }
 

@@ -23,6 +23,10 @@ public:
     void redo() override;
     void undo() override;
 
+    // Valid after the command has been pushed/redone; used by paste to select
+    // the newly added entities.
+    int entityId() const { return m_id; }
+
 private:
     CadDocument* m_document;
     std::unique_ptr<CadEntity> m_entity;  // held only while undone

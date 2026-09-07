@@ -1,5 +1,7 @@
 #include "cad/core/entities/ArcEntity.h"
 
+#include "cad/core/geometry/Geometry.h"
+
 #include <QTransform>
 
 #include <algorithm>
@@ -57,6 +59,21 @@ void ArcEntity::rotate(const QPointF& pivot, double degrees)
                              .translate(-pivot.x(), -pivot.y());
     m_center = t.map(m_center);
     m_startAngle += degrees;
+}
+
+void ArcEntity::mirror(const QPointF& axisA, const QPointF& axisB)
+{
+    // Reflect the center and the arc's start point; the radius is preserved and
+    // reflection reverses the sweep direction.
+    const double a0 = m_startAngle * kDegToRad;
+    const QPointF start(m_center.x() + m_radius * std::cos(a0),
+                        m_center.y() + m_radius * std::sin(a0));
+    const QPointF c2 = reflectPoint(m_center, axisA, axisB);
+    const QPointF s2 = reflectPoint(start, axisA, axisB);
+
+    m_center = c2;
+    m_startAngle = std::atan2(s2.y() - c2.y(), s2.x() - c2.x()) / kDegToRad;
+    m_sweepAngle = -m_sweepAngle;
 }
 
 } // namespace cad

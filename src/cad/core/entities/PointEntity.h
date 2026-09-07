@@ -16,6 +16,7 @@ public:
     QPainterPath path() const override;
     void translate(const QPointF& delta) override;
     void rotate(const QPointF& pivot, double degrees) override;
+    void mirror(const QPointF& axisA, const QPointF& axisB) override;
 
     QPointF pos() const { return m_pos; }
     void setPos(const QPointF& pos) { m_pos = pos; }

@@ -1,6 +1,12 @@
 #pragma once
 
+#include "cad/core/entities/CadEntity.h"
+
+#include <QList>
 #include <QWidget>
+
+#include <memory>
+#include <vector>
 
 class QUndoStack;
 class CadScene;
@@ -11,6 +17,9 @@ namespace cad {
 class CadDocument;
 class CadTool;
 class SelectTool;
+class MoveTool;
+class RotateTool;
+class MirrorTool;
 class DrawLineTool;
 class DrawCircleTool;
 class DrawPointTool;
@@ -33,6 +42,11 @@ private:
     void setActiveTool(cad::CadTool* tool);
     void refreshInputBar();
     void deleteSelection();
+    void copySelection();
+    void pasteClipboard();
+    void arrayRectangular();
+    void arrayPolar();
+    QList<int> selectedEntityIds() const;
 
     cad::CadDocument* m_document = nullptr;
     QUndoStack* m_undoStack = nullptr;
@@ -41,6 +55,9 @@ private:
     ToolInputBar* m_inputBar = nullptr;
 
     cad::SelectTool* m_selectTool = nullptr;
+    cad::MoveTool* m_moveTool = nullptr;
+    cad::RotateTool* m_rotateTool = nullptr;
+    cad::MirrorTool* m_mirrorTool = nullptr;
     cad::DrawLineTool* m_lineTool = nullptr;
     cad::DrawCircleTool* m_circleTool = nullptr;
     cad::DrawPointTool* m_pointTool = nullptr;
@@ -49,4 +66,6 @@ private:
     cad::DrawArcTool* m_arcTool = nullptr;
     cad::DrawPolygonTool* m_polygonTool = nullptr;
     cad::CadTool* m_activeTool = nullptr;
+
+    std::vector<std::unique_ptr<cad::CadEntity>> m_clipboard;
 };

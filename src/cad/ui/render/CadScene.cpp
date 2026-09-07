@@ -13,6 +13,7 @@ CadScene::CadScene(cad::CadDocument* document, QObject* parent)
 {
     connect(m_document, &cad::CadDocument::entityAdded, this, &CadScene::onEntityAdded);
     connect(m_document, &cad::CadDocument::entityRemoved, this, &CadScene::onEntityRemoved);
+    connect(m_document, &cad::CadDocument::entityAboutToChange, this, &CadScene::onEntityAboutToChange);
     connect(m_document, &cad::CadDocument::entityChanged, this, &CadScene::onEntityChanged);
 
     // Pick up anything already in the document.
@@ -26,7 +27,7 @@ void CadScene::onEntityAdded(int id)
     if (m_items.count(id) != 0) {
         return;
     }
-    auto* item = new EntityItem(m_document->entity(id));
+    auto* item = new EntityItem(m_document, id);
     addItem(item);
     m_items[id] = item;
 }
@@ -38,6 +39,14 @@ void CadScene::onEntityRemoved(int id)
         removeItem(it->second);
         delete it->second;  // the entity itself is owned elsewhere (document/undo)
         m_items.erase(it);
+    }
+}
+
+void CadScene::onEntityAboutToChange(int id)
+{
+    const auto it = m_items.find(id);
+    if (it != m_items.end()) {
+        it->second->prepareForChange();
     }
 }
 

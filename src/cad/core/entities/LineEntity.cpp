@@ -1,5 +1,7 @@
 #include "cad/core/entities/LineEntity.h"
 
+#include "cad/core/geometry/Geometry.h"
+
 #include <QTransform>
 
 namespace cad {
@@ -37,6 +39,12 @@ void LineEntity::rotate(const QPointF& pivot, double degrees)
                              .translate(-pivot.x(), -pivot.y());
     m_p1 = t.map(m_p1);
     m_p2 = t.map(m_p2);
+}
+
+void LineEntity::mirror(const QPointF& axisA, const QPointF& axisB)
+{
+    m_p1 = reflectPoint(m_p1, axisA, axisB);
+    m_p2 = reflectPoint(m_p2, axisA, axisB);
 }
 
 } // namespace cad

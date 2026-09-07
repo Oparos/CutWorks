@@ -74,6 +74,20 @@ File formats will be importer/exporter classes converting file ↔ `CadDocument`
 so adding a format never touches rendering. Dependency to add for DXF:
 **libdxfrw** (vendored). Y stays up in the domain; only the view flips it.
 
+**Editing & ownership.** Edits go through undo commands that transfer entity
+ownership explicitly — `AddEntityCommand`, `RemoveEntityCommand` (both move a
+`unique_ptr` in/out of the document) and the general `ModifyEntityCommand`
+(swaps the before/after entity via `CadDocument::swapEntity`). There are no
+shared raw pointers to entities, so nothing leaks or double-frees.
+
+**Invariant (important).** `EntityItem` renders by looking the entity up in the
+document by id (it does not cache it), and `QGraphicsScene` indexes items by
+their `boundingRect`. Therefore `CadDocument` must fire its signals while the
+geometry the view will read is still valid: `entityRemoved` **before** erasing
+the entity, and `entityAboutToChange` **before** a `swapEntity` (so the item can
+`prepareGeometryChange()` on its old bounds). Violating this order leaves a
+dangling pointer in the scene's spatial index and crashes on the next hit-test.
+
 ### CAM — toolpath generation
 Build contours from geometry, generate cutting toolpaths with lead-in/lead-out,
 apply kerf offset, and post-process to G-code for GRBL-HAL. Cut/machine/path
@@ -185,8 +199,11 @@ same discipline:
 | Theming + high-DPI foundation | ✅ done |
 | CAD module — foundation (document model, rendering, line tool, undo, parametric input) | ✅ done |
 | CAD module — drawing tools: line, polyline, rectangle, circle, arc, polygon, point | ✅ done |
-| CAD module — selection (click + window/crossing) + delete | ✅ done |
-| CAD module — editing: move / rotate / copy-paste (ModifyEntityCommand) | ⬜ next |
+| CAD module — selection (click + Ctrl + window/crossing) + delete | ✅ done |
+| CAD module — editing: move (base→destination) + rotate (pivot→angle) via ModifyEntityCommand | ✅ done |
+| CAD module — editing: copy/paste (Ctrl+C / Ctrl+V) | ✅ done |
+| CAD module — editing: mirror (2-point axis) + array (rect + polar) | ✅ done |
+| CAD module — editing: offset / scale / trim / extend / fillet / chamfer | ⬜ next |
 | CAD module — selection/edit, snapping, layers, editing tools, I/O, icons | ⬜ not started |
 | CAM module | ⬜ placeholder only |
 | CNC module — backend core (transport, GRBL protocol, controller) | ✅ done |

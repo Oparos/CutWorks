@@ -1,5 +1,7 @@
 #include "cad/core/entities/CircleEntity.h"
 
+#include "cad/core/geometry/Geometry.h"
+
 #include <QTransform>
 
 namespace cad {
@@ -35,6 +37,11 @@ void CircleEntity::rotate(const QPointF& pivot, double degrees)
                              .rotate(degrees)
                              .translate(-pivot.x(), -pivot.y());
     m_center = t.map(m_center);
+}
+
+void CircleEntity::mirror(const QPointF& axisA, const QPointF& axisB)
+{
+    m_center = reflectPoint(m_center, axisA, axisB);  // radius is unchanged
 }
 
 } // namespace cad

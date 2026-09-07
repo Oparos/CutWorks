@@ -28,6 +28,7 @@ public:
     QPainterPath path() const override;
     void translate(const QPointF& delta) override;
     void rotate(const QPointF& pivot, double degrees) override;
+    void mirror(const QPointF& axisA, const QPointF& axisB) override;
 
     const QVector<PolyVertex>& vertices() const { return m_vertices; }
     bool isClosed() const { return m_closed; }

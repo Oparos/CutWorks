@@ -1,44 +1,57 @@
 #include "cad/ui/render/EntityItem.h"
 
+#include "cad/core/CadDocument.h"
 #include "cad/core/entities/CadEntity.h"
 
 #include <QPainter>
 #include <QPainterPathStroker>
 #include <QStyleOptionGraphicsItem>
 
-EntityItem::EntityItem(cad::CadEntity* entity)
-    : m_entity(entity)
+EntityItem::EntityItem(cad::CadDocument* document, int id)
+    : m_document(document)
+    , m_id(id)
 {
     setFlag(ItemIsSelectable, true);
 }
 
-void EntityItem::refresh()
+cad::CadEntity* EntityItem::entity() const
 {
-    prepareGeometryChange();
-    update();
+    return m_document->entity(m_id);
 }
 
-int EntityItem::entityId() const
+void EntityItem::prepareForChange()
 {
-    return m_entity->id();
+    prepareGeometryChange();
+}
+
+void EntityItem::refresh()
+{
+    update();
 }
 
 QRectF EntityItem::boundingRect() const
 {
-    // A little margin so the (cosmetic) stroke is never clipped.
-    return m_entity->bounds().adjusted(-1, -1, 1, 1);
+    const cad::CadEntity* e = entity();
+    return e ? e->bounds().adjusted(-1, -1, 1, 1) : QRectF();
 }
 
 QPainterPath EntityItem::shape() const
 {
-    // Give the thin geometry some width so it is easy to click.
+    const cad::CadEntity* e = entity();
+    if (!e) {
+        return QPainterPath();
+    }
     QPainterPathStroker stroker;
-    stroker.setWidth(1.5);
-    return stroker.createStroke(m_entity->path());
+    stroker.setWidth(1.5);  // give the thin geometry a clickable width
+    return stroker.createStroke(e->path());
 }
 
 void EntityItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget*)
 {
+    const cad::CadEntity* e = entity();
+    if (!e) {
+        return;
+    }
     const bool selected = (option->state & QStyle::State_Selected);
 
     QPen pen(selected ? QColor(0xff, 0x9c, 0x33) : QColor(0xe6, 0xe6, 0xe6));
@@ -47,5 +60,5 @@ void EntityItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option
 
     painter->setPen(pen);
     painter->setBrush(Qt::NoBrush);
-    painter->drawPath(m_entity->path());
+    painter->drawPath(e->path());
 }

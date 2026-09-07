@@ -31,6 +31,11 @@ public:
     // Release ownership of an entity (used by undo). Returns nullptr if unknown.
     std::unique_ptr<CadEntity> takeEntity(int id);
 
+    // Replace the entity stored under `id` with `replacement` (which is given
+    // that id) and return the previous one. Emits entityChanged. Used by edits
+    // to swap in a modified copy without invalidating the view's id-based item.
+    std::unique_ptr<CadEntity> swapEntity(int id, std::unique_ptr<CadEntity> replacement);
+
     CadEntity* entity(int id) const;
     QList<int> entityIds() const;
 
@@ -40,7 +45,8 @@ public:
 signals:
     void entityAdded(int id);
     void entityRemoved(int id);
-    void entityChanged(int id);
+    void entityAboutToChange(int id);  // before its geometry changes (view: prepareGeometryChange)
+    void entityChanged(int id);        // after (view: repaint)
 
 private:
     std::unordered_map<int, std::unique_ptr<CadEntity>> m_entities;
