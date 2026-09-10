@@ -2,10 +2,13 @@
 
 #include "cad/core/CadDocument.h"
 #include "cad/core/entities/CadEntity.h"
+#include "cad/core/geometry/Intersections.h"
 
 #include <QPainter>
 #include <QPainterPathStroker>
 #include <QStyleOptionGraphicsItem>
+
+#include <limits>
 
 EntityItem::EntityItem(cad::CadDocument* document, int id)
     : m_document(document)
@@ -27,6 +30,12 @@ void EntityItem::prepareForChange()
 void EntityItem::refresh()
 {
     update();
+}
+
+double EntityItem::distanceTo(const QPointF& scenePos) const
+{
+    const cad::CadEntity* e = entity();
+    return e ? cad::geom::distanceToEntity(*e, scenePos) : std::numeric_limits<double>::max();
 }
 
 QRectF EntityItem::boundingRect() const

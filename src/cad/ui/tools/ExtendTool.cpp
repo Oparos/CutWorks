@@ -7,6 +7,7 @@
 #include "cad/core/entities/PolylineEntity.h"
 #include "cad/core/geometry/Intersections.h"
 #include "cad/ui/render/EntityItem.h"
+#include "cad/ui/tools/ToolPick.h"
 
 #include <QGraphicsPathItem>
 #include <QGraphicsScene>
@@ -30,12 +31,8 @@ constexpr double kAngleEps = 1e-4;  // angular tolerance (deg)
 
 int entityIdAt(QGraphicsScene* scene, const QPointF& pos)
 {
-    for (QGraphicsItem* item : scene->items(pos)) {
-        if (auto* entityItem = dynamic_cast<EntityItem*>(item)) {
-            return entityItem->entityId();
-        }
-    }
-    return -1;
+    EntityItem* item = pickEntityItem(scene, pos);
+    return item ? item->entityId() : -1;
 }
 
 double distance(const QPointF& a, const QPointF& b)

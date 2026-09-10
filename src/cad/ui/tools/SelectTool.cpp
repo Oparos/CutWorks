@@ -1,6 +1,7 @@
 #include "cad/ui/tools/SelectTool.h"
 
 #include "cad/ui/render/EntityItem.h"
+#include "cad/ui/tools/ToolPick.h"
 
 #include <QBrush>
 #include <QGraphicsRectItem>
@@ -9,19 +10,6 @@
 #include <QPen>
 
 namespace cad {
-
-namespace {
-EntityItem* entityItemAt(QGraphicsScene* scene, const QPointF& pos)
-{
-    const QList<QGraphicsItem*> hits = scene->items(pos);
-    for (QGraphicsItem* item : hits) {
-        if (auto* entityItem = dynamic_cast<EntityItem*>(item)) {
-            return entityItem;
-        }
-    }
-    return nullptr;
-}
-}
 
 SelectTool::SelectTool(QGraphicsScene* scene, QObject* parent)
     : CadTool(parent)
@@ -34,7 +22,7 @@ void SelectTool::onMousePress(const QPointF& scenePos)
     m_pressPos = scenePos;
     const bool ctrl = QGuiApplication::keyboardModifiers().testFlag(Qt::ControlModifier);
 
-    if (EntityItem* hit = entityItemAt(m_scene, scenePos)) {
+    if (EntityItem* hit = pickEntityItem(m_scene, scenePos)) {
         if (ctrl) {
             hit->setSelected(!hit->isSelected());  // toggle, keep the rest
         }

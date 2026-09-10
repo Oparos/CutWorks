@@ -4,11 +4,13 @@
 #include "cad/core/entities/CircleEntity.h"
 #include "cad/core/entities/LineEntity.h"
 #include "cad/core/entities/PolylineEntity.h"
+#include "cad/core/geometry/Geometry.h"
 
 #include <QLineF>
 
 #include <algorithm>
 #include <cmath>
+#include <limits>
 #include <variant>
 #include <vector>
 
@@ -19,6 +21,7 @@ namespace geom {
 constexpr double kPi = 3.14159265358979323846;
 constexpr double kRadToDeg = 180.0 / kPi;
 constexpr double kDenEps = 1e-9;      // parallel-line determinant threshold
+constexpr double kTouchDist = 1e-7;   // mm: grazing distance counted as a tangent touch
 constexpr double kParamEps = 1e-6;    // tolerance on a segment parameter (0..1)
 constexpr double kMergeEps = 1e-6;    // near-duplicate point distance (mm)
 constexpr double kAngleEps = 1e-6;    // tolerance on an angle (deg)
@@ -96,31 +99,38 @@ QVector<QPointF> segCirc(const Seg& s, const Circ& c)
     QVector<QPointF> out;
     const double dx = s.b.x() - s.a.x();
     const double dy = s.b.y() - s.a.y();
-    const double A = dx * dx + dy * dy;
-    if (A < kDenEps) {
+    const double len = std::hypot(dx, dy);
+    if (len < kDenEps) {
         return out;  // degenerate segment
     }
 
-    const double fx = s.a.x() - c.c.x();
-    const double fy = s.a.y() - c.c.y();
-    const double B = 2.0 * (dx * fx + dy * fy);
-    const double C = fx * fx + fy * fy - c.r * c.r;
-
-    double disc = B * B - 4.0 * A * C;
-    if (disc < -kDenEps) {
-        return out;  // line misses the circle
+    // Work along the unit direction u, measuring arc length tau from point a.
+    // A point at distance tau from center: tau^2 + 2(w·u)tau + (|w|^2 - r^2) = 0,
+    // where w = a - center. Solving via the perpendicular distance h from the
+    // center to the line keeps an endpoint that lies exactly on the circle as an
+    // exact root (tau = 0), instead of losing it to rounding in |w|^2 - r^2.
+    const double ux = dx / len;
+    const double uy = dy / len;
+    const double wx = s.a.x() - c.c.x();
+    const double wy = s.a.y() - c.c.y();
+    const double proj = wx * ux + wy * uy;                     // w·u (foot at tau = -proj)
+    const double h2 = std::max(0.0, wx * wx + wy * wy - proj * proj);
+    const double h = std::sqrt(h2);
+    if (h > c.r + kTouchDist) {
+        return out;  // the line passes outside the circle
     }
-    disc = std::max(disc, 0.0);
-    const double sq = std::sqrt(disc);
-    const double ts[2] = {(-B - sq) / (2.0 * A), (-B + sq) / (2.0 * A)};
-    const int count = (sq < kDenEps) ? 1 : 2;
+
+    const double half = std::sqrt(std::max(0.0, c.r * c.r - h2));
+    const double taus[2] = {-proj - half, -proj + half};
+    const int count = (half <= kTouchDist) ? 1 : 2;            // tangent = one point
 
     for (int i = 0; i < count; ++i) {
-        const double t = ts[i];
+        const double tau = taus[i];
+        const double t = tau / len;                            // 0..1 along the segment
         if (s.bounded && (t < -kParamEps || t > 1.0 + kParamEps)) {
             continue;
         }
-        const QPointF p(s.a.x() + t * dx, s.a.y() + t * dy);
+        const QPointF p(s.a.x() + tau * ux, s.a.y() + tau * uy);
         if (angleWithinSweep(angleAtDeg(c.c, p), c.start, c.sweep)) {
             out.append(p);
         }
@@ -180,6 +190,43 @@ QVector<QPointF> intersectPrim(const Primitive& p, const Primitive& q)
     return circCirc(c1, std::get<Circ>(q));
 }
 
+double distToSeg(const QPointF& p, const Seg& s)
+{
+    const double abx = s.b.x() - s.a.x();
+    const double aby = s.b.y() - s.a.y();
+    const double len2 = abx * abx + aby * aby;
+    if (len2 < kDenEps) {
+        return std::hypot(p.x() - s.a.x(), p.y() - s.a.y());
+    }
+    double t = ((p.x() - s.a.x()) * abx + (p.y() - s.a.y()) * aby) / len2;
+    t = std::clamp(t, 0.0, 1.0);
+    return std::hypot(p.x() - (s.a.x() + t * abx), p.y() - (s.a.y() + t * aby));
+}
+
+double distToCirc(const QPointF& p, const Circ& c)
+{
+    const double dc = std::hypot(p.x() - c.c.x(), p.y() - c.c.y());
+    if (angleWithinSweep(angleAtDeg(c.c, p), c.start, c.sweep)) {
+        return std::abs(dc - c.r);  // nearest point on the arc is radially in/out
+    }
+    // Outside the sweep: the nearest point is one of the two arc endpoints.
+    const double a0 = c.start * kPi / 180.0;
+    const double a1 = (c.start + c.sweep) * kPi / 180.0;
+    const double d0 = std::hypot(p.x() - (c.c.x() + c.r * std::cos(a0)),
+                                 p.y() - (c.c.y() + c.r * std::sin(a0)));
+    const double d1 = std::hypot(p.x() - (c.c.x() + c.r * std::cos(a1)),
+                                 p.y() - (c.c.y() + c.r * std::sin(a1)));
+    return std::min(d0, d1);
+}
+
+double distToPrim(const QPointF& p, const Primitive& pr)
+{
+    if (const auto* s = std::get_if<Seg>(&pr)) {
+        return distToSeg(p, *s);
+    }
+    return distToCirc(p, std::get<Circ>(pr));
+}
+
 // Break an entity into the primitive edges it is drawn from.
 std::vector<Primitive> decompose(const CadEntity& e)
 {
@@ -206,7 +253,15 @@ std::vector<Primitive> decompose(const CadEntity& e)
         const int n = vs.size();
         const int segs = poly.isClosed() ? n : n - 1;
         for (int i = 0; i < segs; ++i) {
-            parts.push_back(Seg{vs[i].pos, vs[(i + 1) % n].pos, true});
+            const QPointF a = vs[i].pos;
+            const QPointF b = vs[(i + 1) % n].pos;
+            const BulgeArc arc = bulgeToArc(a, b, vs[i].bulge);
+            if (arc.isArc) {
+                parts.push_back(Circ{arc.center, arc.radius, arc.startAngleDeg, arc.sweepDeg});
+            }
+            else {
+                parts.push_back(Seg{a, b, true});
+            }
         }
         break;
     }
@@ -258,6 +313,19 @@ QVector<QPointF> supportLineVsEntity(const QPointF& p1, const QPointF& p2, const
 QVector<QPointF> supportCircleVsEntity(const QPointF& center, double radius, const CadEntity& e)
 {
     return intersectSupport(Circ{center, radius, 0.0, 360.0}, e);
+}
+
+double distanceToEntity(const CadEntity& e, const QPointF& p)
+{
+    const std::vector<Primitive> parts = decompose(e);
+    if (parts.empty()) {
+        return QLineF(p, e.bounds().center()).length();  // point/empty: fall back to its location
+    }
+    double best = std::numeric_limits<double>::max();
+    for (const Primitive& pr : parts) {
+        best = std::min(best, distToPrim(p, pr));
+    }
+    return best;
 }
 
 } // namespace geom

@@ -63,10 +63,15 @@ and caused ownership/leak problems):
   - `commands/` — `QUndoCommand`s that change the document by transferring entity
     ownership (add / take), so nothing leaks or double-frees.
   - `geometry/` — pure geometry math with no widget dependency. `Geometry.h`
-    (point reflection) and `Intersections` — entity↔entity crossing queries
+    (point reflection; `bulgeToArc` — the DXF bulge → arc conversion shared by
+    polyline rendering and the geometry engine, so they never disagree);
+    `Intersections` — entity↔entity crossing queries
     (line/arc/circle/polyline, via `decompose` into segment + circular
-    primitives) plus the arc-angle helpers used by trim/extend, and later by
-    fillet/chamfer/offset. Y-up, degrees CCW from +X.
+    primitives), `distanceToEntity` (point→entity distance, for precise picking
+    and later snapping), plus the arc-angle helpers used by trim/extend, and
+    later by fillet/chamfer/offset; `Tangents` — the external/internal common
+    tangent lines of two circles (used by the tangent tool and, later, the
+    slot/teardrop tool). Y-up, degrees CCW from +X.
 - `ui/` (Qt Widgets):
   - `render/` — `EntityItem` (a QGraphicsItem that just draws an entity's
     `path()`), `CadScene` (observes the document, one item per entity), `CadView`
@@ -90,8 +95,11 @@ shared raw pointers to entities, so nothing leaks or double-frees.
 
 **Trim & Extend.** Both tools treat *every other entity as an implicit
 cutting/boundary edge* (no boundary picking step, matching the reference app).
-They hit-test the entity under the cursor via the scene, compute crossings with
-`geom::intersect`, and preview the outcome live (Trim: the removed piece in red;
+They pick the entity under the cursor with a shared helper (`ui/tools/ToolPick`)
+that uses a constant *screen-pixel* tolerance and returns the entity **nearest**
+the cursor (not the topmost), so picking is easy and predictable even where
+entities touch. They compute crossings with `geom::intersect` and preview the
+outcome live (Trim: the removed piece in red;
 Extend: the stretched result in cyan). Trim removes the piece bracketed by the
 two nearest crossings around the cursor and commits as `RemoveEntityCommand` +
 `AddEntityCommand`s for the surviving pieces (a line/arc can split in two, a
@@ -220,6 +228,10 @@ same discipline:
 | Theming + high-DPI foundation | ✅ done |
 | CAD module — foundation (document model, rendering, line tool, undo, parametric input) | ✅ done |
 | CAD module — drawing tools: line, polyline, rectangle, circle, arc, polygon, point | ✅ done |
+| CAD module — tangent tool (external tangents of two circles) | ✅ done |
+| CAD module — polyline bulge rendering (arcs in polylines) | ✅ done |
+| CAD module — slot tool (obround, closed bulge polyline) | ✅ done |
+| CAD module — teardrop tool (2 circles → closed bulge-polyline contour) | ✅ done |
 | CAD module — selection (click + Ctrl + window/crossing) + delete | ✅ done |
 | CAD module — editing: move (base→destination) + rotate (pivot→angle) via ModifyEntityCommand | ✅ done |
 | CAD module — editing: copy/paste (Ctrl+C / Ctrl+V) | ✅ done |

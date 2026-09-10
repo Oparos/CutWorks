@@ -20,6 +20,10 @@ public:
     void refresh();           // after: repaint
     int entityId() const { return m_id; }
 
+    // Shortest distance from a scene point to this entity's geometry, for
+    // picking the entity actually nearest the cursor. Large if the entity is gone.
+    double distanceTo(const QPointF& scenePos) const;
+
     QRectF boundingRect() const override;
     QPainterPath shape() const override;
     void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget) override;

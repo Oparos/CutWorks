@@ -8,6 +8,7 @@
 #include "cad/core/entities/LineEntity.h"
 #include "cad/core/geometry/Intersections.h"
 #include "cad/ui/render/EntityItem.h"
+#include "cad/ui/tools/ToolPick.h"
 
 #include <QGraphicsPathItem>
 #include <QGraphicsScene>
@@ -38,12 +39,8 @@ struct TrimPlan
 
 int entityIdAt(QGraphicsScene* scene, const QPointF& pos)
 {
-    for (QGraphicsItem* item : scene->items(pos)) {
-        if (auto* entityItem = dynamic_cast<EntityItem*>(item)) {
-            return entityItem->entityId();
-        }
-    }
-    return -1;
+    EntityItem* item = pickEntityItem(scene, pos);
+    return item ? item->entityId() : -1;
 }
 
 // All points where the clicked entity is crossed by every other entity.
@@ -108,6 +105,9 @@ TrimPlan planTrimLine(const LineEntity& line, const QPointF& click, const QVecto
     sortUnique(ts, kTEps);
 
     const auto [a, b] = bracket(ts, std::clamp(paramOf(click), 0.0, 1.0));
+    if (a <= kTEps && b >= 1.0 - kTEps) {
+        return plan;  // no cut brackets the cursor — nothing to trim (never delete whole)
+    }
 
     plan.valid = true;
     plan.removed.moveTo(pointAt(a));
@@ -148,6 +148,9 @@ TrimPlan planTrimArc(const ArcEntity& arc, const QPointF& click, const QVector<Q
     sortUnique(thetas, kAngleEps);
 
     const auto [a, b] = bracket(thetas, std::clamp(paramOf(click), 0.0, span));
+    if (a <= kAngleEps && b >= span - kAngleEps) {
+        return plan;  // no cut brackets the cursor — nothing to trim (never delete whole)
+    }
 
     plan.valid = true;
     plan.removed = ArcEntity(center, r, start + sign * a, sign * (b - a)).path();
@@ -173,14 +176,11 @@ TrimPlan planTrimCircle(const CircleEntity& circle, const QPointF& click, const 
     }
     sortUnique(angles, kAngleEps);
 
-    if (angles.empty()) {
-        // No cutting edges: clicking a lone circle removes it entirely.
-        plan.valid = true;
-        plan.removed = circle.path();
-        return plan;
-    }
     if (angles.size() < 2) {
-        return plan;  // a single touch point cannot split a closed loop
+        // A circle needs at least two real crossings to cut a piece out. A lone
+        // circle, or one only *touched* by a tangent (a single point), is left
+        // alone — Trim never deletes a whole entity (use Delete for that).
+        return plan;
     }
 
     const double clickAngle = geom::angleAtDeg(center, click);

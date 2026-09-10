@@ -10,6 +10,8 @@ add_library(cutworks_cad STATIC
     core/geometry/Geometry.h
     core/geometry/Intersections.h
     core/geometry/Intersections.cpp
+    core/geometry/Tangents.h
+    core/geometry/Tangents.cpp
     core/entities/CadEntity.h
     core/entities/LineEntity.h
     core/entities/LineEntity.cpp
@@ -44,6 +46,8 @@ add_library(cutworks_cad STATIC
     ui/render/CadView.h
     ui/render/CadView.cpp
     ui/tools/CadTool.h
+    ui/tools/ToolPick.h
+    ui/tools/ToolPick.cpp
     ui/tools/SelectTool.h
     ui/tools/SelectTool.cpp
     ui/tools/MoveTool.h
@@ -68,6 +72,12 @@ add_library(cutworks_cad STATIC
     ui/tools/DrawRectangleTool.cpp
     ui/tools/DrawArcTool.h
     ui/tools/DrawArcTool.cpp
+    ui/tools/DrawTangentTool.h
+    ui/tools/DrawTangentTool.cpp
+    ui/tools/DrawSlotTool.h
+    ui/tools/DrawSlotTool.cpp
+    ui/tools/DrawTeardropTool.h
+    ui/tools/DrawTeardropTool.cpp
     ui/tools/DrawPolygonTool.h
     ui/tools/DrawPolygonTool.cpp
 )

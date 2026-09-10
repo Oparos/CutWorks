@@ -22,6 +22,9 @@ class DrawPolylineTool;
 class DrawRectangleTool;
 class DrawCircleTool;
 class DrawArcTool;
+class DrawTangentTool;
+class DrawSlotTool;
+class DrawTeardropTool;
 class DrawPolygonTool;
 class DrawPointTool;
 }
@@ -58,6 +61,9 @@ private:
     cad::DrawRectangleTool* m_rectangleTool = nullptr;
     cad::DrawCircleTool* m_circleTool = nullptr;
     cad::DrawArcTool* m_arcTool = nullptr;
+    cad::DrawTangentTool* m_tangentTool = nullptr;
+    cad::DrawSlotTool* m_slotTool = nullptr;
+    cad::DrawTeardropTool* m_teardropTool = nullptr;
     cad::DrawPolygonTool* m_polygonTool = nullptr;
     cad::DrawPointTool* m_pointTool = nullptr;
     cad::CadTool* m_activeTool = nullptr;

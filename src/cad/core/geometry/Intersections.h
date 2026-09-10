@@ -47,5 +47,10 @@ QVector<QPointF> supportLineVsEntity(const QPointF& p1, const QPointF& p2,
 QVector<QPointF> supportCircleVsEntity(const QPointF& center, double radius,
                                        const CadEntity& e);
 
+// Shortest distance from point p to entity e (as drawn). Used for precise
+// hit-testing / picking (choose the entity nearest the cursor) and later
+// snapping.
+double distanceToEntity(const CadEntity& e, const QPointF& p);
+
 } // namespace geom
 } // namespace cad

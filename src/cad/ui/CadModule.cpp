@@ -11,6 +11,9 @@
 #include "cad/ui/tools/DrawPointTool.h"
 #include "cad/ui/tools/DrawPolygonTool.h"
 #include "cad/ui/tools/DrawPolylineTool.h"
+#include "cad/ui/tools/DrawSlotTool.h"
+#include "cad/ui/tools/DrawTangentTool.h"
+#include "cad/ui/tools/DrawTeardropTool.h"
 #include "cad/ui/tools/DrawRectangleTool.h"
 #include "cad/ui/tools/ExtendTool.h"
 #include "cad/ui/tools/MirrorTool.h"
@@ -46,6 +49,9 @@ CadModule::CadModule(QWidget* parent)
     m_rectangleTool = new cad::DrawRectangleTool(m_document, m_undoStack, m_scene, this);
     m_circleTool = new cad::DrawCircleTool(m_document, m_undoStack, m_scene, this);
     m_arcTool = new cad::DrawArcTool(m_document, m_undoStack, m_scene, this);
+    m_tangentTool = new cad::DrawTangentTool(m_document, m_undoStack, m_scene, this);
+    m_slotTool = new cad::DrawSlotTool(m_document, m_undoStack, m_scene, this);
+    m_teardropTool = new cad::DrawTeardropTool(m_document, m_undoStack, m_scene, this);
     m_polygonTool = new cad::DrawPolygonTool(m_document, m_undoStack, m_scene, this);
     m_pointTool = new cad::DrawPointTool(m_document, m_undoStack, this);
 
@@ -70,6 +76,9 @@ CadModule::CadModule(QWidget* parent)
         {tr("Rectangle"), m_rectangleTool},
         {tr("Circle"), m_circleTool},
         {tr("Arc"), m_arcTool},
+        {tr("Tangent"), m_tangentTool},
+        {tr("Slot"), m_slotTool},
+        {tr("Teardrop"), m_teardropTool},
         {tr("Polygon"), m_polygonTool},
         {tr("Point"), m_pointTool},
     };
