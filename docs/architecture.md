@@ -62,6 +62,11 @@ and caused ownership/leak problems):
     emits `entityAdded/Removed/Changed`. No widget dependency.
   - `commands/` — `QUndoCommand`s that change the document by transferring entity
     ownership (add / take), so nothing leaks or double-frees.
+  - `geometry/` — pure geometry math with no widget dependency. `Geometry.h`
+    (point reflection) and `Intersections` — entity↔entity crossing queries
+    (line/arc/circle/polyline, via `decompose` into segment + circular
+    primitives) plus the arc-angle helpers used by trim/extend, and later by
+    fillet/chamfer/offset. Y-up, degrees CCW from +X.
 - `ui/` (Qt Widgets):
   - `render/` — `EntityItem` (a QGraphicsItem that just draws an entity's
     `path()`), `CadScene` (observes the document, one item per entity), `CadView`
@@ -69,6 +74,9 @@ and caused ownership/leak problems):
   - `tools/` — `CadTool` base + drawing/editing tools that push commands.
     Tools support **parametric input** (typed Length/Angle, …) via
     `inputFields()`/`applyInput()`, shown in `ToolInputBar`.
+  - `CadModule` is composition + tool switching only; `EditController` holds the
+    app-level edit operations on the selection (delete, copy/paste, arrays) plus
+    the clipboard, so the module does not grow into a god-object.
 
 File formats will be importer/exporter classes converting file ↔ `CadDocument`,
 so adding a format never touches rendering. Dependency to add for DXF:
@@ -79,6 +87,19 @@ ownership explicitly — `AddEntityCommand`, `RemoveEntityCommand` (both move a
 `unique_ptr` in/out of the document) and the general `ModifyEntityCommand`
 (swaps the before/after entity via `CadDocument::swapEntity`). There are no
 shared raw pointers to entities, so nothing leaks or double-frees.
+
+**Trim & Extend.** Both tools treat *every other entity as an implicit
+cutting/boundary edge* (no boundary picking step, matching the reference app).
+They hit-test the entity under the cursor via the scene, compute crossings with
+`geom::intersect`, and preview the outcome live (Trim: the removed piece in red;
+Extend: the stretched result in cyan). Trim removes the piece bracketed by the
+two nearest crossings around the cursor and commits as `RemoveEntityCommand` +
+`AddEntityCommand`s for the surviving pieces (a line/arc can split in two, a
+circle becomes the complementary arc, a lone entity is deleted whole). Extend
+moves the end nearer the cursor to the nearest crossing of its *supporting*
+geometry (infinite line / full circle) ahead of that end, and commits as a
+single `ModifyEntityCommand`. Polyline trim is a later increment; polyline
+extend moves the end vertex.
 
 **Invariant (important).** `EntityItem` renders by looking the entity up in the
 document by id (it does not cache it), and `QGraphicsScene` indexes items by
@@ -203,7 +224,9 @@ same discipline:
 | CAD module — editing: move (base→destination) + rotate (pivot→angle) via ModifyEntityCommand | ✅ done |
 | CAD module — editing: copy/paste (Ctrl+C / Ctrl+V) | ✅ done |
 | CAD module — editing: mirror (2-point axis) + array (rect + polar) | ✅ done |
-| CAD module — editing: offset / scale / trim / extend / fillet / chamfer | ⬜ next |
+| CAD module — editing: trim + extend (implicit edges; line/arc/circle, poly extend) | ✅ done |
+| CAD module — geometry math (`core/geometry/Intersections`) | ✅ done |
+| CAD module — editing: offset / scale / fillet / chamfer + polyline trim | ⬜ next |
 | CAD module — selection/edit, snapping, layers, editing tools, I/O, icons | ⬜ not started |
 | CAM module | ⬜ placeholder only |
 | CNC module — backend core (transport, GRBL protocol, controller) | ✅ done |

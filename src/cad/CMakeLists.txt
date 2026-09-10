@@ -8,6 +8,8 @@
 add_library(cutworks_cad STATIC
     # --- core (domain) ---
     core/geometry/Geometry.h
+    core/geometry/Intersections.h
+    core/geometry/Intersections.cpp
     core/entities/CadEntity.h
     core/entities/LineEntity.h
     core/entities/LineEntity.cpp
@@ -31,6 +33,8 @@ add_library(cutworks_cad STATIC
     # --- ui (presentation) ---
     ui/CadModule.h
     ui/CadModule.cpp
+    ui/EditController.h
+    ui/EditController.cpp
     ui/ToolInputBar.h
     ui/ToolInputBar.cpp
     ui/render/EntityItem.h
@@ -48,6 +52,10 @@ add_library(cutworks_cad STATIC
     ui/tools/RotateTool.cpp
     ui/tools/MirrorTool.h
     ui/tools/MirrorTool.cpp
+    ui/tools/TrimTool.h
+    ui/tools/TrimTool.cpp
+    ui/tools/ExtendTool.h
+    ui/tools/ExtendTool.cpp
     ui/tools/DrawLineTool.h
     ui/tools/DrawLineTool.cpp
     ui/tools/DrawCircleTool.h
