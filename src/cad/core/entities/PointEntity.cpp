@@ -17,7 +17,9 @@ PointEntity::PointEntity(const QPointF& pos)
 
 std::unique_ptr<CadEntity> PointEntity::clone() const
 {
-    return std::make_unique<PointEntity>(m_pos);
+    auto copy = std::make_unique<PointEntity>(m_pos);
+    cloneBaseInto(*copy);
+    return copy;
 }
 
 QPainterPath PointEntity::path() const
@@ -47,6 +49,11 @@ void PointEntity::rotate(const QPointF& pivot, double degrees)
 void PointEntity::mirror(const QPointF& axisA, const QPointF& axisB)
 {
     m_pos = reflectPoint(m_pos, axisA, axisB);
+}
+
+void PointEntity::scale(const QPointF& pivot, double factor)
+{
+    m_pos = pivot + (m_pos - pivot) * factor;
 }
 
 } // namespace cad

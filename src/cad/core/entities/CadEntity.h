@@ -3,6 +3,7 @@
 #include <QPainterPath>
 #include <QPointF>
 #include <QRectF>
+#include <QString>
 
 #include <memory>
 
@@ -35,6 +36,9 @@ public:
     virtual void translate(const QPointF& delta) = 0;
     virtual void rotate(const QPointF& pivot, double degrees) = 0;
     virtual void mirror(const QPointF& axisA, const QPointF& axisB) = 0;
+    // Uniform scale about `pivot` by `factor` (> 0). Angles are preserved, so
+    // circles stay circles and polyline bulges are unchanged.
+    virtual void scale(const QPointF& pivot, double factor) = 0;
 
     QRectF bounds() const { return path().boundingRect(); }
 
@@ -43,8 +47,19 @@ public:
     int id() const { return m_id; }
     void setId(int id) { m_id = id; }
 
+    // The layer this entity belongs to (by name). Empty means "unassigned" — the
+    // document stamps the active layer when the entity is first added. clone()
+    // copies it, so copy/paste/array/mirror keep the layer.
+    QString layer() const { return m_layer; }
+    void setLayer(const QString& layer) { m_layer = layer; }
+
 protected:
+    // Copy the non-geometric attributes (currently just the layer) onto a fresh
+    // clone. Each clone() calls this so those attributes are never lost.
+    void cloneBaseInto(CadEntity& other) const { other.m_layer = m_layer; }
+
     int m_id = 0;
+    QString m_layer;
 };
 
 } // namespace cad

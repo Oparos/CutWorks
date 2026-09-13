@@ -23,7 +23,9 @@ ArcEntity::ArcEntity(const QPointF& center, double radius, double startAngleDeg,
 
 std::unique_ptr<CadEntity> ArcEntity::clone() const
 {
-    return std::make_unique<ArcEntity>(m_center, m_radius, m_startAngle, m_sweepAngle);
+    auto copy = std::make_unique<ArcEntity>(m_center, m_radius, m_startAngle, m_sweepAngle);
+    cloneBaseInto(*copy);
+    return copy;
 }
 
 QPainterPath ArcEntity::path() const
@@ -74,6 +76,12 @@ void ArcEntity::mirror(const QPointF& axisA, const QPointF& axisB)
     m_center = c2;
     m_startAngle = std::atan2(s2.y() - c2.y(), s2.x() - c2.x()) / kDegToRad;
     m_sweepAngle = -m_sweepAngle;
+}
+
+void ArcEntity::scale(const QPointF& pivot, double factor)
+{
+    m_center = pivot + (m_center - pivot) * factor;
+    m_radius *= std::abs(factor);  // angles unchanged: uniform scale preserves them
 }
 
 } // namespace cad

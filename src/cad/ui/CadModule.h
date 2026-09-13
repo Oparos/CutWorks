@@ -20,6 +20,8 @@ class MirrorTool;
 class TrimTool;
 class ExtendTool;
 class FilletChamferTool;
+class ScaleTool;
+class OffsetTool;
 class DrawLineTool;
 class DrawPolylineTool;
 class DrawRectangleTool;
@@ -62,6 +64,8 @@ private:
     cad::ExtendTool* m_extendTool = nullptr;
     cad::FilletChamferTool* m_filletTool = nullptr;
     cad::FilletChamferTool* m_chamferTool = nullptr;
+    cad::ScaleTool* m_scaleTool = nullptr;
+    cad::OffsetTool* m_offsetTool = nullptr;
     cad::DrawLineTool* m_lineTool = nullptr;
     cad::DrawPolylineTool* m_polylineTool = nullptr;
     cad::DrawRectangleTool* m_rectangleTool = nullptr;

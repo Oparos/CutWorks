@@ -14,7 +14,9 @@ CircleEntity::CircleEntity(const QPointF& center, double radius)
 
 std::unique_ptr<CadEntity> CircleEntity::clone() const
 {
-    return std::make_unique<CircleEntity>(m_center, m_radius);
+    auto copy = std::make_unique<CircleEntity>(m_center, m_radius);
+    cloneBaseInto(*copy);
+    return copy;
 }
 
 QPainterPath CircleEntity::path() const
@@ -42,6 +44,12 @@ void CircleEntity::rotate(const QPointF& pivot, double degrees)
 void CircleEntity::mirror(const QPointF& axisA, const QPointF& axisB)
 {
     m_center = reflectPoint(m_center, axisA, axisB);  // radius is unchanged
+}
+
+void CircleEntity::scale(const QPointF& pivot, double factor)
+{
+    m_center = pivot + (m_center - pivot) * factor;
+    m_radius *= (factor < 0.0 ? -factor : factor);
 }
 
 } // namespace cad

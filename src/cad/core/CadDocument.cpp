@@ -9,6 +9,11 @@ CadDocument::CadDocument(QObject* parent)
 
 int CadDocument::addEntity(std::unique_ptr<CadEntity> entity)
 {
+    // A freshly drawn entity carries no layer yet — put it on the active layer.
+    // Copies (paste/array/mirror) and DXF imports already carry one, so keep it.
+    if (entity->layer().isEmpty()) {
+        entity->setLayer(m_layers.activeName());
+    }
     const int id = m_nextId++;
     entity->setId(id);
     m_entities[id] = std::move(entity);

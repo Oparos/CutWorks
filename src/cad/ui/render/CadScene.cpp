@@ -1,6 +1,7 @@
 #include "cad/ui/render/CadScene.h"
 
 #include "cad/core/CadDocument.h"
+#include "cad/core/entities/CadEntity.h"
 #include "cad/ui/render/EntityItem.h"
 
 #include <QPainter>
@@ -15,6 +16,8 @@ CadScene::CadScene(cad::CadDocument* document, QObject* parent)
     connect(m_document, &cad::CadDocument::entityRemoved, this, &CadScene::onEntityRemoved);
     connect(m_document, &cad::CadDocument::entityAboutToChange, this, &CadScene::onEntityAboutToChange);
     connect(m_document, &cad::CadDocument::entityChanged, this, &CadScene::onEntityChanged);
+    connect(&m_document->layers(), &cad::LayerTable::layerChanged, this, &CadScene::onLayerChanged);
+    connect(&m_document->layers(), &cad::LayerTable::layersChanged, this, &CadScene::onLayersChanged);
 
     // Pick up anything already in the document.
     for (int id : m_document->entityIds()) {
@@ -30,6 +33,7 @@ void CadScene::onEntityAdded(int id)
     auto* item = new EntityItem(m_document, id);
     addItem(item);
     m_items[id] = item;
+    applyLayerVisibility(id, item);
 }
 
 void CadScene::onEntityRemoved(int id)
@@ -71,6 +75,31 @@ double CadScene::minorGridStep(double sceneScale)
     const double magnitude = std::pow(10.0, std::floor(std::log10(raw)));
     const double residual = raw / magnitude;
     return (residual < 2.0 ? 1.0 : (residual < 5.0 ? 2.0 : 5.0)) * magnitude;
+}
+
+void CadScene::applyLayerVisibility(int id, EntityItem* item)
+{
+    const cad::CadEntity* e = m_document->entity(id);
+    item->setVisible(!e || m_document->layers().isVisible(e->layer()));
+}
+
+void CadScene::onLayerChanged(const QString& name)
+{
+    // A layer's color or visibility changed: refresh every item on that layer.
+    for (const auto& [id, item] : m_items) {
+        const cad::CadEntity* e = m_document->entity(id);
+        if (e && e->layer() == name) {
+            item->setVisible(m_document->layers().isVisible(name));
+            item->update();
+        }
+    }
+}
+
+void CadScene::onLayersChanged()
+{
+    for (const auto& [id, item] : m_items) {
+        applyLayerVisibility(id, item);
+    }
 }
 
 void CadScene::drawBackground(QPainter* painter, const QRectF& rect)

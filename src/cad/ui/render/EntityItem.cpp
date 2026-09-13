@@ -63,7 +63,8 @@ void EntityItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option
     }
     const bool selected = (option->state & QStyle::State_Selected);
 
-    QPen pen(selected ? QColor(0xff, 0x9c, 0x33) : QColor(0xe6, 0xe6, 0xe6));
+    const QColor color = selected ? QColor(0xff, 0x9c, 0x33) : m_document->layers().colorOf(e->layer());
+    QPen pen(color);
     pen.setCosmetic(true);  // constant on-screen width regardless of zoom
     pen.setWidth(selected ? 2 : 1);
 

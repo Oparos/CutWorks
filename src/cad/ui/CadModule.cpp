@@ -2,6 +2,7 @@
 
 #include "cad/core/CadDocument.h"
 #include "cad/ui/EditController.h"
+#include "cad/ui/LayersPanel.h"
 #include "cad/ui/ToolInputBar.h"
 #include "cad/ui/render/CadScene.h"
 #include "cad/ui/render/CadView.h"
@@ -18,8 +19,10 @@
 #include "cad/ui/tools/ExtendTool.h"
 #include "cad/ui/tools/FilletChamferTool.h"
 #include "cad/ui/tools/MirrorTool.h"
+#include "cad/ui/tools/OffsetTool.h"
 #include "cad/ui/tools/MoveTool.h"
 #include "cad/ui/tools/RotateTool.h"
+#include "cad/ui/tools/ScaleTool.h"
 #include "cad/ui/tools/SelectTool.h"
 #include "cad/ui/tools/TrimTool.h"
 
@@ -53,6 +56,8 @@ CadModule::CadModule(QWidget* parent)
                                               m_undoStack, m_scene, this);
     m_chamferTool = new cad::FilletChamferTool(cad::FilletChamferTool::Mode::Chamfer, m_document,
                                                m_undoStack, m_scene, this);
+    m_scaleTool = new cad::ScaleTool(m_document, m_undoStack, m_scene, this);
+    m_offsetTool = new cad::OffsetTool(m_document, m_undoStack, m_scene, this);
     m_lineTool = new cad::DrawLineTool(m_document, m_undoStack, m_scene, this);
     m_polylineTool = new cad::DrawPolylineTool(m_document, m_undoStack, m_scene, this);
     m_rectangleTool = new cad::DrawRectangleTool(m_document, m_undoStack, m_scene, this);
@@ -82,6 +87,8 @@ CadModule::CadModule(QWidget* parent)
         {tr("Extend"), m_extendTool},
         {tr("Fillet"), m_filletTool},
         {tr("Chamfer"), m_chamferTool},
+        {tr("Scale"), m_scaleTool},
+        {tr("Offset"), m_offsetTool},
         {tr("Line"), m_lineTool},
         {tr("Polyline"), m_polylineTool},
         {tr("Rectangle"), m_rectangleTool},
@@ -171,9 +178,12 @@ CadModule::CadModule(QWidget* parent)
     centerLayout->addWidget(m_view, 1);
     centerLayout->addWidget(m_inputBar);
 
+    auto* layersPanel = new LayersPanel(m_document, this);
+
     auto* mainLayout = new QHBoxLayout(this);
     mainLayout->addLayout(toolsLayout);
     mainLayout->addLayout(centerLayout, 1);
+    mainLayout->addWidget(layersPanel);
 
     // --- Parametric input bar wiring ---
     connect(m_view, &CadView::focusInputRequested, this, [this]() {

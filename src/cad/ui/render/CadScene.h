@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QGraphicsScene>
+#include <QString>
 
 #include <unordered_map>
 
@@ -32,6 +33,9 @@ private:
     void onEntityRemoved(int id);
     void onEntityAboutToChange(int id);
     void onEntityChanged(int id);
+    void onLayerChanged(const QString& name);  // color/visibility of one layer
+    void onLayersChanged();                     // layer set changed
+    void applyLayerVisibility(int id, EntityItem* item);
 
     cad::CadDocument* m_document;
     std::unordered_map<int, EntityItem*> m_items;

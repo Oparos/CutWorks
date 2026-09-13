@@ -46,7 +46,9 @@ PolylineEntity::PolylineEntity(const QVector<PolyVertex>& vertices, bool closed)
 
 std::unique_ptr<CadEntity> PolylineEntity::clone() const
 {
-    return std::make_unique<PolylineEntity>(m_vertices, m_closed);
+    auto copy = std::make_unique<PolylineEntity>(m_vertices, m_closed);
+    cloneBaseInto(*copy);
+    return copy;
 }
 
 QPainterPath PolylineEntity::path() const
@@ -99,6 +101,13 @@ void PolylineEntity::mirror(const QPointF& axisA, const QPointF& axisB)
     for (PolyVertex& v : m_vertices) {
         v.pos = reflectPoint(v.pos, axisA, axisB);
         v.bulge = -v.bulge;  // reflection reverses arc direction
+    }
+}
+
+void PolylineEntity::scale(const QPointF& pivot, double factor)
+{
+    for (PolyVertex& v : m_vertices) {
+        v.pos = pivot + (v.pos - pivot) * factor;  // bulge unchanged (angle preserved)
     }
 }
 

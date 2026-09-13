@@ -14,6 +14,8 @@ add_library(cutworks_cad STATIC
     core/geometry/Tangents.cpp
     core/snap/SnapEngine.h
     core/snap/SnapEngine.cpp
+    core/layer/LayerTable.h
+    core/layer/LayerTable.cpp
     core/entities/CadEntity.h
     core/entities/LineEntity.h
     core/entities/LineEntity.cpp
@@ -39,6 +41,8 @@ add_library(cutworks_cad STATIC
     ui/CadModule.cpp
     ui/EditController.h
     ui/EditController.cpp
+    ui/LayersPanel.h
+    ui/LayersPanel.cpp
     ui/ToolInputBar.h
     ui/ToolInputBar.cpp
     ui/render/EntityItem.h
@@ -64,6 +68,10 @@ add_library(cutworks_cad STATIC
     ui/tools/ExtendTool.cpp
     ui/tools/FilletChamferTool.h
     ui/tools/FilletChamferTool.cpp
+    ui/tools/ScaleTool.h
+    ui/tools/ScaleTool.cpp
+    ui/tools/OffsetTool.h
+    ui/tools/OffsetTool.cpp
     ui/tools/DrawLineTool.h
     ui/tools/DrawLineTool.cpp
     ui/tools/DrawCircleTool.h

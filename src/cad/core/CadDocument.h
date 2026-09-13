@@ -1,6 +1,7 @@
 #pragma once
 
 #include "cad/core/entities/CadEntity.h"
+#include "cad/core/layer/LayerTable.h"
 
 #include <QList>
 #include <QObject>
@@ -39,6 +40,11 @@ public:
     CadEntity* entity(int id) const;
     QList<int> entityIds() const;
 
+    // The drawing's layers (color, visibility, active layer). New entities added
+    // without a layer inherit the active one.
+    LayerTable& layers() { return m_layers; }
+    const LayerTable& layers() const { return m_layers; }
+
     // Call after editing an entity in place so views repaint it.
     void notifyChanged(int id);
 
@@ -50,6 +56,7 @@ signals:
 
 private:
     std::unordered_map<int, std::unique_ptr<CadEntity>> m_entities;
+    LayerTable m_layers;
     int m_nextId = 1;
 };
 

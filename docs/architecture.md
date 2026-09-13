@@ -57,9 +57,16 @@ and caused ownership/leak problems):
 
 - `core/` (domain, no `QGraphicsItem`/widgets):
   - `entities/` — pure geometry (`CadEntity` base with `path()`, `translate`,
-    `rotate`, `clone`; `LineEntity`, …). Uses Qt Gui value types only.
+    `rotate`, `mirror`, `scale`, `clone`; `LineEntity`, …). Uses Qt Gui value
+    types only.
   - `CadDocument` — the single owner of all entities (`unique_ptr`, keyed by id);
-    emits `entityAdded/Removed/Changed`. No widget dependency.
+    emits `entityAdded/Removed/Changed`. No widget dependency. It also owns the
+    `LayerTable`; a freshly drawn entity with no layer is stamped with the active
+    layer on add (copies/imports keep the layer they carry).
+  - `layer/LayerTable` — the drawing's layers (name + color + visibility + the
+    active layer), DXF `LAYER`-compatible. A QObject for change signals, no
+    widgets. Each entity names its layer; the scene reads color/visibility from
+    here. Travels with the document, so a DXF load in CAM carries its layers too.
   - `commands/` — `QUndoCommand`s that change the document by transferring entity
     ownership (add / take), so nothing leaks or double-frees.
   - `geometry/` — pure geometry math with no widget dependency. `Geometry.h`
@@ -250,10 +257,12 @@ same discipline:
 | CAD module — editing: mirror (2-point axis) + array (rect + polar) | ✅ done |
 | CAD module — editing: trim + extend (implicit edges; line/arc/circle, poly extend) | ✅ done |
 | CAD module — editing: fillet + chamfer (polyline corner *and* two lines, sticky radius) | ✅ done |
+| CAD module — editing: scale (uniform, base + factor/reference) | ✅ done |
+| CAD module — editing: offset (line/circle/arc/straight polyline; bulge polyline later) | ✅ done |
 | CAD module — geometry math (`core/geometry/Intersections`) | ✅ done |
 | CAD module — snapping (endpoint / midpoint / center / intersection / perpendicular / tangent / grid) + per-mode toggles | ✅ done |
-| CAD module — layers (DXF-compatible) | ⬜ planned |
-| CAD module — editing: offset / scale + polyline trim, arc/arc fillet | ⬜ planned |
+| CAD module — layers (name/color/visibility/active, DXF-compatible) + panel | ✅ done |
+| CAD module — editing: polyline trim, bulge-polyline offset, arc/arc fillet | ⬜ later |
 | CAD module — DXF import/export (libdxfrw, vendored) | ⬜ planned |
 | CAD module — selection/edit, snapping, layers, editing tools, I/O, icons | ⬜ not started |
 | CAM module | ⬜ placeholder only |

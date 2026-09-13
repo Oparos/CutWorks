@@ -14,7 +14,9 @@ LineEntity::LineEntity(const QPointF& p1, const QPointF& p2)
 
 std::unique_ptr<CadEntity> LineEntity::clone() const
 {
-    return std::make_unique<LineEntity>(m_p1, m_p2);
+    auto copy = std::make_unique<LineEntity>(m_p1, m_p2);
+    cloneBaseInto(*copy);
+    return copy;
 }
 
 QPainterPath LineEntity::path() const
@@ -45,6 +47,12 @@ void LineEntity::mirror(const QPointF& axisA, const QPointF& axisB)
 {
     m_p1 = reflectPoint(m_p1, axisA, axisB);
     m_p2 = reflectPoint(m_p2, axisA, axisB);
+}
+
+void LineEntity::scale(const QPointF& pivot, double factor)
+{
+    m_p1 = pivot + (m_p1 - pivot) * factor;
+    m_p2 = pivot + (m_p2 - pivot) * factor;
 }
 
 } // namespace cad
