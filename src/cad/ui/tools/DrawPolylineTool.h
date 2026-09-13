@@ -30,6 +30,10 @@ public:
 
     QList<InputField> inputFields() const override;
     void applyInput(const QVector<double>& values) override;
+    std::optional<QPointF> referencePoint() const override
+    {
+        return m_vertices.isEmpty() ? std::nullopt : std::optional<QPointF>(m_vertices.last());
+    }
 
 private:
     void addVertex(const QPointF& pos);

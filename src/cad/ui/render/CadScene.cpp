@@ -58,23 +58,30 @@ void CadScene::onEntityChanged(int id)
     }
 }
 
+double CadScene::minorGridStep(double sceneScale)
+{
+    // The spacing follows the zoom so lines stay a roughly constant distance
+    // apart on screen. This bounds how many lines we draw (independent of zoom) —
+    // a fixed spacing would draw tens of thousands of lines when zoomed out.
+    if (sceneScale <= 0.0) {
+        return 0.0;
+    }
+    constexpr double targetPx = 70.0;              // desired on-screen spacing
+    const double raw = targetPx / sceneScale;      // that many scene mm
+    const double magnitude = std::pow(10.0, std::floor(std::log10(raw)));
+    const double residual = raw / magnitude;
+    return (residual < 2.0 ? 1.0 : (residual < 5.0 ? 2.0 : 5.0)) * magnitude;
+}
+
 void CadScene::drawBackground(QPainter* painter, const QRectF& rect)
 {
     painter->fillRect(rect, QColor(0x22, 0x22, 0x22));
 
-    // Dynamic grid: the spacing follows the zoom so lines stay a roughly
-    // constant distance apart on screen. This bounds how many lines we draw
-    // (independent of zoom) — a fixed spacing would draw tens of thousands of
-    // lines when zoomed out and freeze the app.
     const double scale = std::abs(painter->worldTransform().m11());
-    if (scale <= 0.0) {
+    const double minor = minorGridStep(scale);
+    if (minor <= 0.0) {
         return;
     }
-    const double targetPx = 70.0;                  // desired on-screen spacing
-    const double raw = targetPx / scale;           // that many scene mm
-    const double magnitude = std::pow(10.0, std::floor(std::log10(raw)));
-    const double residual = raw / magnitude;
-    const double minor = (residual < 2.0 ? 1.0 : (residual < 5.0 ? 2.0 : 5.0)) * magnitude;
     const double major = minor * 5.0;
 
     auto drawLines = [&](double step, const QColor& color) {

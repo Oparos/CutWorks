@@ -29,6 +29,10 @@ public:
 
     QList<InputField> inputFields() const override;
     void applyInput(const QVector<double>& values) override;
+    std::optional<QPointF> referencePoint() const override
+    {
+        return m_hasStart ? std::optional<QPointF>(m_start) : std::nullopt;
+    }
 
 private:
     void commitLine(const QPointF& end);

@@ -72,10 +72,22 @@ and caused ownership/leak problems):
     later by fillet/chamfer/offset; `Tangents` — the external/internal common
     tangent lines of two circles (used by the tangent tool and, later, the
     slot/teardrop tool). Y-up, degrees CCW from +X.
+  - `snap/SnapEngine` — given a cursor point + tolerance (+ the active tool's
+    reference point and the current grid step), returns the nearest significant
+    point: endpoint / midpoint / center / intersection, plus perpendicular and
+    tangent (measured from the tool's reference point) and a grid fallback.
+    Reuses the entities' geometry and `geom::intersect`; per-mode enable flags are
+    wired to UI checkboxes. No widgets — the view converts a pixel tolerance to
+    scene units, supplies the reference point via `CadTool::referencePoint()` and
+    the grid step via `CadScene::minorGridStep()`, and draws the per-type marker.
 - `ui/` (Qt Widgets):
   - `render/` — `EntityItem` (a QGraphicsItem that just draws an entity's
     `path()`), `CadScene` (observes the document, one item per entity), `CadView`
-    (Y-up pan/zoom viewport).
+    (Y-up pan/zoom viewport). `CadView` applies snapping centrally: it snaps each
+    cursor position through the `SnapEngine` before handing it to the active tool
+    and draws the snap marker, so every tool gets snapping for free. Picking (for
+    trim/extend/fillet/tangent) goes through `ui/tools/ToolPick`, a shared helper
+    that returns the entity nearest the cursor within a constant pixel tolerance.
   - `tools/` — `CadTool` base + drawing/editing tools that push commands.
     Tools support **parametric input** (typed Length/Angle, …) via
     `inputFields()`/`applyInput()`, shown in `ToolInputBar`.
@@ -237,8 +249,12 @@ same discipline:
 | CAD module — editing: copy/paste (Ctrl+C / Ctrl+V) | ✅ done |
 | CAD module — editing: mirror (2-point axis) + array (rect + polar) | ✅ done |
 | CAD module — editing: trim + extend (implicit edges; line/arc/circle, poly extend) | ✅ done |
+| CAD module — editing: fillet + chamfer (polyline corner *and* two lines, sticky radius) | ✅ done |
 | CAD module — geometry math (`core/geometry/Intersections`) | ✅ done |
-| CAD module — editing: offset / scale / fillet / chamfer + polyline trim | ⬜ next |
+| CAD module — snapping (endpoint / midpoint / center / intersection / perpendicular / tangent / grid) + per-mode toggles | ✅ done |
+| CAD module — layers (DXF-compatible) | ⬜ planned |
+| CAD module — editing: offset / scale + polyline trim, arc/arc fillet | ⬜ planned |
+| CAD module — DXF import/export (libdxfrw, vendored) | ⬜ planned |
 | CAD module — selection/edit, snapping, layers, editing tools, I/O, icons | ⬜ not started |
 | CAM module | ⬜ placeholder only |
 | CNC module — backend core (transport, GRBL protocol, controller) | ✅ done |

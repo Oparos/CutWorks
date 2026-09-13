@@ -20,6 +20,10 @@ class CadScene : public QGraphicsScene
 public:
     explicit CadScene(cad::CadDocument* document, QObject* parent = nullptr);
 
+    // The minor-grid spacing (scene units) for a given view scale. Shared by the
+    // background grid and grid snapping so both use the same, zoom-adaptive step.
+    static double minorGridStep(double sceneScale);
+
 protected:
     void drawBackground(QPainter* painter, const QRectF& rect) override;
 

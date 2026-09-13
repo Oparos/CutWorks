@@ -12,6 +12,8 @@ add_library(cutworks_cad STATIC
     core/geometry/Intersections.cpp
     core/geometry/Tangents.h
     core/geometry/Tangents.cpp
+    core/snap/SnapEngine.h
+    core/snap/SnapEngine.cpp
     core/entities/CadEntity.h
     core/entities/LineEntity.h
     core/entities/LineEntity.cpp
@@ -60,6 +62,8 @@ add_library(cutworks_cad STATIC
     ui/tools/TrimTool.cpp
     ui/tools/ExtendTool.h
     ui/tools/ExtendTool.cpp
+    ui/tools/FilletChamferTool.h
+    ui/tools/FilletChamferTool.cpp
     ui/tools/DrawLineTool.h
     ui/tools/DrawLineTool.cpp
     ui/tools/DrawCircleTool.h

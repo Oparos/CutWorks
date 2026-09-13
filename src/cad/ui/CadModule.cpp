@@ -16,6 +16,7 @@
 #include "cad/ui/tools/DrawTeardropTool.h"
 #include "cad/ui/tools/DrawRectangleTool.h"
 #include "cad/ui/tools/ExtendTool.h"
+#include "cad/ui/tools/FilletChamferTool.h"
 #include "cad/ui/tools/MirrorTool.h"
 #include "cad/ui/tools/MoveTool.h"
 #include "cad/ui/tools/RotateTool.h"
@@ -23,7 +24,9 @@
 #include "cad/ui/tools/TrimTool.h"
 
 #include <QButtonGroup>
+#include <QCheckBox>
 #include <QHBoxLayout>
+#include <QLabel>
 #include <QPushButton>
 #include <QShortcut>
 #include <QUndoStack>
@@ -32,11 +35,13 @@
 CadModule::CadModule(QWidget* parent)
     : QWidget(parent)
     , m_document(new cad::CadDocument(this))
+    , m_snap(m_document)
     , m_undoStack(new QUndoStack(this))
 {
     m_scene = new CadScene(m_document, this);
     m_view = new CadView(this);
     m_view->setScene(m_scene);
+    m_view->setSnapEngine(&m_snap);
 
     m_selectTool = new cad::SelectTool(m_scene, this);
     m_moveTool = new cad::MoveTool(m_document, m_undoStack, m_scene, this);
@@ -44,6 +49,10 @@ CadModule::CadModule(QWidget* parent)
     m_mirrorTool = new cad::MirrorTool(m_document, m_undoStack, m_scene, this);
     m_trimTool = new cad::TrimTool(m_document, m_undoStack, m_scene, this);
     m_extendTool = new cad::ExtendTool(m_document, m_undoStack, m_scene, this);
+    m_filletTool = new cad::FilletChamferTool(cad::FilletChamferTool::Mode::Fillet, m_document,
+                                              m_undoStack, m_scene, this);
+    m_chamferTool = new cad::FilletChamferTool(cad::FilletChamferTool::Mode::Chamfer, m_document,
+                                               m_undoStack, m_scene, this);
     m_lineTool = new cad::DrawLineTool(m_document, m_undoStack, m_scene, this);
     m_polylineTool = new cad::DrawPolylineTool(m_document, m_undoStack, m_scene, this);
     m_rectangleTool = new cad::DrawRectangleTool(m_document, m_undoStack, m_scene, this);
@@ -71,6 +80,8 @@ CadModule::CadModule(QWidget* parent)
         {tr("Mirror"), m_mirrorTool},
         {tr("Trim"), m_trimTool},
         {tr("Extend"), m_extendTool},
+        {tr("Fillet"), m_filletTool},
+        {tr("Chamfer"), m_chamferTool},
         {tr("Line"), m_lineTool},
         {tr("Polyline"), m_polylineTool},
         {tr("Rectangle"), m_rectangleTool},
@@ -127,8 +138,36 @@ CadModule::CadModule(QWidget* parent)
     topBar->addWidget(btnArrayPolar);
     topBar->addStretch();
 
+    // --- Snap toggles: enable/disable each snap mode (all on by default) ---
+    struct SnapToggle
+    {
+        const char* label;
+        bool cad::SnapEngine::*flag;
+    };
+    const SnapToggle snapToggles[] = {
+        {QT_TR_NOOP("End"), &cad::SnapEngine::endpoints},
+        {QT_TR_NOOP("Mid"), &cad::SnapEngine::midpoints},
+        {QT_TR_NOOP("Center"), &cad::SnapEngine::centers},
+        {QT_TR_NOOP("Intersect"), &cad::SnapEngine::intersections},
+        {QT_TR_NOOP("Perp"), &cad::SnapEngine::perpendicular},
+        {QT_TR_NOOP("Tangent"), &cad::SnapEngine::tangent},
+        {QT_TR_NOOP("Grid"), &cad::SnapEngine::grid},
+    };
+    auto* snapBar = new QHBoxLayout();
+    snapBar->addWidget(new QLabel(tr("Snap:"), this));
+    for (const SnapToggle& toggle : snapToggles) {
+        auto* checkBox = new QCheckBox(tr(toggle.label), this);
+        checkBox->setChecked(true);
+        checkBox->setFocusPolicy(Qt::NoFocus);
+        bool cad::SnapEngine::*flag = toggle.flag;
+        connect(checkBox, &QCheckBox::toggled, this, [this, flag](bool on) { m_snap.*flag = on; });
+        snapBar->addWidget(checkBox);
+    }
+    snapBar->addStretch();
+
     auto* centerLayout = new QVBoxLayout();
     centerLayout->addLayout(topBar);
+    centerLayout->addLayout(snapBar);
     centerLayout->addWidget(m_view, 1);
     centerLayout->addWidget(m_inputBar);
 

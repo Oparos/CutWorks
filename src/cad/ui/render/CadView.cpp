@@ -1,11 +1,72 @@
 #include "cad/ui/render/CadView.h"
 
+#include "cad/core/snap/SnapEngine.h"
+#include "cad/ui/render/CadScene.h"
 #include "cad/ui/tools/CadTool.h"
 
+#include <QGraphicsPathItem>
 #include <QMouseEvent>
+#include <QPainterPath>
+#include <QPen>
 #include <QScrollBar>
 #include <QShowEvent>
 #include <QWheelEvent>
+
+#include <cmath>
+
+namespace {
+
+// Marker glyph in screen pixels (the item ignores the view transform), one shape
+// per snap kind — the usual CAD convention.
+QPainterPath snapMarkerPath(cad::SnapType type)
+{
+    constexpr double r = 5.0;
+    QPainterPath path;
+    switch (type) {
+    case cad::SnapType::Endpoint:  // square
+        path.addRect(-r, -r, 2 * r, 2 * r);
+        break;
+    case cad::SnapType::Midpoint:  // triangle
+        path.moveTo(0, -r);
+        path.lineTo(r, r);
+        path.lineTo(-r, r);
+        path.closeSubpath();
+        break;
+    case cad::SnapType::Center:  // circle
+        path.addEllipse(QPointF(0, 0), r, r);
+        break;
+    case cad::SnapType::Intersection:  // cross
+        path.moveTo(-r, -r);
+        path.lineTo(r, r);
+        path.moveTo(-r, r);
+        path.lineTo(r, -r);
+        break;
+    case cad::SnapType::Perpendicular:  // right-angle symbol
+        path.moveTo(-r, -r);
+        path.lineTo(-r, r);
+        path.lineTo(r, r);
+        path.moveTo(-r, 0);
+        path.lineTo(0, 0);
+        path.lineTo(0, r);
+        break;
+    case cad::SnapType::Tangent:  // circle with a tangent line on top
+        path.addEllipse(QPointF(0, 0), r * 0.7, r * 0.7);
+        path.moveTo(-r, -r * 0.7);
+        path.lineTo(r, -r * 0.7);
+        break;
+    case cad::SnapType::Grid:  // plus
+        path.moveTo(-r, 0);
+        path.lineTo(r, 0);
+        path.moveTo(0, -r);
+        path.lineTo(0, r);
+        break;
+    case cad::SnapType::None:
+        break;
+    }
+    return path;
+}
+
+} // namespace
 
 CadView::CadView(QWidget* parent)
     : QGraphicsView(parent)
@@ -49,6 +110,47 @@ void CadView::setTool(cad::CadTool* tool)
     m_tool = tool;
     // A drawing tool handles clicks itself; without one we allow rubber-band select.
     setDragMode(tool ? QGraphicsView::NoDrag : QGraphicsView::RubberBandDrag);
+    hideSnapMarker();
+}
+
+QPointF CadView::applySnap(const QPointF& scenePos)
+{
+    if (!m_snap) {
+        return scenePos;
+    }
+    const double scale = std::abs(transform().m11());
+    const double tolerance = (scale > 1e-9) ? 10.0 / scale : 10.0;  // ~10 px, in scene units
+    const double gridStep = CadScene::minorGridStep(scale);
+    const std::optional<QPointF> reference = m_tool ? m_tool->referencePoint() : std::nullopt;
+
+    const cad::SnapResult result = m_snap->snap(scenePos, tolerance, gridStep, reference);
+    if (!result.hit) {
+        hideSnapMarker();
+        return scenePos;
+    }
+
+    if (!m_snapMarker) {
+        m_snapMarker = new QGraphicsPathItem();
+        m_snapMarker->setFlag(QGraphicsItem::ItemIgnoresTransformations, true);
+        QPen pen(QColor(0x33, 0xcc, 0xff));  // cyan snap marker
+        pen.setCosmetic(true);
+        pen.setWidthF(1.4);
+        m_snapMarker->setPen(pen);
+        m_snapMarker->setBrush(Qt::NoBrush);
+        m_snapMarker->setZValue(10000);
+        scene()->addItem(m_snapMarker);
+    }
+    m_snapMarker->setPath(snapMarkerPath(result.type));
+    m_snapMarker->setPos(result.point);
+    m_snapMarker->show();
+    return result.point;
+}
+
+void CadView::hideSnapMarker()
+{
+    if (m_snapMarker) {
+        m_snapMarker->hide();
+    }
 }
 
 void CadView::wheelEvent(QWheelEvent* event)
@@ -68,6 +170,7 @@ void CadView::mousePressEvent(QMouseEvent* event)
         m_panning = true;
         m_lastPanPos = event->position().toPoint();
         setCursor(Qt::ClosedHandCursor);
+        hideSnapMarker();
         event->accept();
         return;
     }
@@ -77,7 +180,7 @@ void CadView::mousePressEvent(QMouseEvent* event)
         return;
     }
     if (m_tool && event->button() == Qt::LeftButton) {
-        m_tool->onMousePress(mapToScene(event->position().toPoint()));
+        m_tool->onMousePress(applySnap(mapToScene(event->position().toPoint())));
         event->accept();
         return;
     }
@@ -95,7 +198,7 @@ void CadView::mouseMoveEvent(QMouseEvent* event)
         return;
     }
     if (m_tool) {
-        m_tool->onMouseMove(mapToScene(event->position().toPoint()));
+        m_tool->onMouseMove(applySnap(mapToScene(event->position().toPoint())));
     }
     QGraphicsView::mouseMoveEvent(event);
 }
@@ -109,7 +212,7 @@ void CadView::mouseReleaseEvent(QMouseEvent* event)
         return;
     }
     if (m_tool && event->button() == Qt::LeftButton) {
-        m_tool->onMouseRelease(mapToScene(event->position().toPoint()));
+        m_tool->onMouseRelease(applySnap(mapToScene(event->position().toPoint())));
         event->accept();
         return;
     }

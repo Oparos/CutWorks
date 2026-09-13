@@ -1,5 +1,7 @@
 #pragma once
 
+#include "cad/core/snap/SnapEngine.h"
+
 #include <QWidget>
 
 class QUndoStack;
@@ -17,6 +19,7 @@ class RotateTool;
 class MirrorTool;
 class TrimTool;
 class ExtendTool;
+class FilletChamferTool;
 class DrawLineTool;
 class DrawPolylineTool;
 class DrawRectangleTool;
@@ -44,6 +47,7 @@ private:
     void refreshInputBar();
 
     cad::CadDocument* m_document = nullptr;
+    cad::SnapEngine m_snap;
     QUndoStack* m_undoStack = nullptr;
     CadScene* m_scene = nullptr;
     CadView* m_view = nullptr;
@@ -56,6 +60,8 @@ private:
     cad::MirrorTool* m_mirrorTool = nullptr;
     cad::TrimTool* m_trimTool = nullptr;
     cad::ExtendTool* m_extendTool = nullptr;
+    cad::FilletChamferTool* m_filletTool = nullptr;
+    cad::FilletChamferTool* m_chamferTool = nullptr;
     cad::DrawLineTool* m_lineTool = nullptr;
     cad::DrawPolylineTool* m_polylineTool = nullptr;
     cad::DrawRectangleTool* m_rectangleTool = nullptr;

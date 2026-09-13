@@ -3,8 +3,11 @@
 #include <QGraphicsView>
 #include <QPoint>
 
+class QGraphicsPathItem;
+
 namespace cad {
 class CadTool;
+class SnapEngine;
 }
 
 // Pan/zoom viewport for the CAD scene. Y points up (CAD convention). It converts
@@ -18,6 +21,7 @@ public:
     explicit CadView(QWidget* parent = nullptr);
 
     void setTool(cad::CadTool* tool);
+    void setSnapEngine(cad::SnapEngine* snap) { m_snap = snap; }
 
 signals:
     // Tab was pressed while a tool is active — the UI should move keyboard focus
@@ -34,7 +38,13 @@ protected:
     bool focusNextPrevChild(bool next) override;
 
 private:
+    // Snap the raw cursor position to nearby geometry, updating the marker.
+    QPointF applySnap(const QPointF& scenePos);
+    void hideSnapMarker();
+
     cad::CadTool* m_tool = nullptr;
+    cad::SnapEngine* m_snap = nullptr;
+    QGraphicsPathItem* m_snapMarker = nullptr;
     bool m_panning = false;
     bool m_firstShow = true;
     QPoint m_lastPanPos;

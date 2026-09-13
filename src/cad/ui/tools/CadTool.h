@@ -6,6 +6,8 @@
 #include <QString>
 #include <QVector>
 
+#include <optional>
+
 namespace cad {
 
 // Base class for interactive drawing/editing tools. A tool reacts to mouse and
@@ -45,6 +47,10 @@ public:
 
     // Commit typed values (same order as inputFields()).
     virtual void applyInput(const QVector<double>& values) {}
+
+    // The anchor that the perpendicular / tangent snaps measure from (e.g. a
+    // line's start point while its end is being placed). Empty = no such point.
+    virtual std::optional<QPointF> referencePoint() const { return std::nullopt; }
 
 signals:
     void inputChanged();       // parametric fields changed (e.g. mouse moved)
